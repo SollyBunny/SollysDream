@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+
+<html>
+
+	<head>
+		<title> Sollys Dream </title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<style>
+			html, body {
+				height: 100%;
+				display: flex;
+				flex-direction: column;
+			}
+			#container {
+				flex-grow: 1;
+				display: flex;
+			}
+			#game {
+				flex-grow: 1;
+				border: 1px black solid;
+				background-color: red;
+			}
+			#waittext {
+				text-align: center;
+				width: 100%;
+				position: relative;
+				top: 50%;
+			}
+			#boxes {
+				padding-right: 8px;
+				display: block;
+			}
+			#boxcount {
+				text-align: center;
+			}
+			#boxes > hr {
+				margin: 0;
+				margin-bottom: 2px;
+				width: 80%;
+				transform: translate(10%, 0);
+			}
+			.box {
+				display: list-item;
+				list-style-type: none;
+				width: 100%;
+			}
+			#iframecotaniner {
+			
+			}
+			#iframecotaniner, iframe {
+				width: 100%;
+				height: 100%;
+				margin: 0;
+			}
+			iframe {
+				border: none;
+			}
+		</style>
+	</head>
+
+	<body>
+
+		<div id="title"><hr></div>
+		
+
+		<div id="container">
+		
+			<div id="boxes">
+
+				<div id="boxcount"> Players: 0 </div>
+				<hr>
+
+			</div>
+
+			<div id="game">
+
+				<div id="waittext"></div>
+
+				<div id="iframecotainer"></div>
+
+				
+
+			</div>
+
+		</div>
+
+		<script>
+
+			let ws;
+
+			var gamemode;
+			async function fetchgamemode() {
+				await fetch("/gamemode.json")
+				.then(function (response) {
+					return response.json();
+				})
+				.then(function (data) {
+					gamemode = data;
+					ws = new WebSocket(`wss://sollysdream.ddns.net/play${document.location.search}`);
+					ws.onmessage = msgevent;
+				});
+			}
+			fetchgamemode();
+
+			var self = undefined;
+			let iframe;
+			let iframecotainer = document.getElementById("iframecotainer");
+			let playercontainer = document.getElementById("boxes");
+			let playercounter = document.getElementById("boxcount");
+			let player = document.createElement("button");
+			player.className = "box";
+			
+			let room = {
+				id          : null,
+				gamemode    : null,
+				roomname    : null,
+				owner       : null,
+				players     : {},
+				playercount : 0,
+				playing     : false
+			};
+
+			function updateplayercounter() {
+				let temp = gamemode[room.gamemode].minplayers - room.playercount;
+				playercounter.innerHTML = `Players: ${room.playercount}/${gamemode[room.gamemode].maxplayers}`;
+				if (temp < 1) {
+					document.getElementById("waittext").innerHTML = "Waiting for something";
+				} else if (temp == 1) {
+					document.getElementById("waittext").innerHTML = `Waiting for ${temp} more player`;
+				} else {
+					document.getElementById("waittext").innerHTML = `Waiting for ${temp} more players`;
+				}
+			}
+			function addplayer(id, name, data={}) {
+				room.players[id] = {
+					id  : id,
+					name: name,
+					data: data
+				};
+				++room.playercount;
+				let newplayer = player.cloneNode();
+				newplayer.innerHTML = `${name}&nbsp;(${id})`;
+				newplayer.id = id;
+				playercontainer.appendChild(newplayer);
+			}
+			function delplayer(id) {
+				delete room.players[id];
+				playercontainer.removeChild(document.getElementById(id));
+				--room.playercount;
+			}
+
+			function sendstart() {
+
+				ws.send(JSON.stringify({
+					type: "start"
+				}));
+				
+			}
+
+			msgevent = (msg) => {
+				msg = JSON.parse(msg.data);
+				console.log(msg);
+				switch (msg.type) {
+					case "init":
+						for (let i = 5; i < msg.data.length; i += 3) {
+							addplayer(
+								msg.data[i    ],
+								msg.data[i + 1],
+								msg.data[i + 2]
+							);
+						}
+						room.id       = msg.data[0];
+						room.gamemode = msg.data[1];
+						room.roomname = msg.data[2];
+						room.owner    = msg.data[3];
+						self          = msg.data[4]
+						updateplayercounter();
+						document.getElementById("title").innerHTML = `(${room.id}) ${room.roomname}\n Gamemode: ${gamemode[room.gamemode].name} Owner: ${room.players[room.owner].name}<hr>`;
+						break;
+					case "join":
+						addplayer(...msg.data);
+						updateplayercounter();
+						break
+					case "leave":
+						delplayer(msg.id);
+						updateplayercounter();
+						break;
+					case "err":
+						if (msg.msg === "Invalid room id" || msg.msg === "Room is full") {
+							document.location = "/rooms";
+						}
+						break;
+					case "ready":
+						if (self == room.owner) {
+							document.getElementById("waittext").innerHTML = "<button onclick='sendstart()'>Start!</button>";
+						} else {
+							document.getElementById("waittext").innerHTML = "Waiting for owner to start";
+						}
+						break;
+					case "unready":
+						break;
+					case "start":
+						iframe = document.createElement("iframe");
+						iframe.src = `https://sollysdream.ddns.net/game/${room.gamemode}`;
+						iframe.name = "game";
+						iframe.width = "100%";
+						iframe.height = "100%";
+						iframecotainer.appendChild(iframe);
+						iframecotainer.style.display = "block";
+						waittext.style.display = "none";
+					default:
+						break;
+				}
+			};
+
+		</script>
+
+	</body>

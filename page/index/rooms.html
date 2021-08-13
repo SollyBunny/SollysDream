@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+
+<html>
+
+	<head>
+		<title> Sollys Dream </title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<style>
+			.box {
+				width: 15vh;
+				height: 15vh;
+				padding: 0;
+				margin: 0;
+			}
+			.box hr {
+				padding: 0;
+				margin: 0;
+				height: 0%;
+			}
+			.box div {
+				font-weight: bold;
+			}
+		</style>
+	</head>
+
+	<body>
+
+		<button id="make"> Make a room! </button>
+
+		<hr>
+
+		<div id="boxes">
+
+		</div>
+
+		<script>
+
+			let ws;
+
+			var gamemode;
+			async function fetchgamemode() {
+				await fetch("/gamemode.json")
+				.then(function (response) {
+					return response.json();
+				})
+				.then(function (data) {
+					gamemode = data;
+					ws = new WebSocket('wss://sollysdream.ddns.net/rooms');
+					ws.onmessage = msgevent;
+				});
+			}
+			fetchgamemode();
+
+			let gamecontainer = document.getElementById("boxes");
+			let game = document.createElement("button");
+			game.className = "box";
+
+			rooms = {};
+
+			function redoroom(id) {
+				let room = document.getElementById(id);
+				if (rooms[id].players === gamemode[rooms[id].gamemode].maxplayers) {
+					room.onclick = undefined;
+					room.disabled = true;
+				} else {
+					room.onclick = (e) => { 
+						document.location = `/play?id=${e.target.id}`; 
+					};
+					room.disabled = false;
+				}
+				room.innerHTML = `<div>${rooms[id].roomname}\n</div>(${id})<hr> Owner: ${rooms[id].ownername}<br>Playing: ${rooms[id].playing}<br>(${rooms[id].players}/${gamemode[rooms[id].gamemode].maxplayers})`;
+			}
+			
+			function makeroom(id, gamemode, roomname, ownername, players, playing) {
+				rooms[id] = {
+					gamemode   : gamemode,
+					roomname   : roomname,
+					ownername  : ownername,
+					players    : players,
+					playing    : playing,
+				};
+				let newgame = game.cloneNode();
+				newgame.id = id;
+				gamecontainer.appendChild(newgame);
+				redoroom(id);
+			}
+
+			
+
+			msgevent = (msg) => {
+				msg = JSON.parse(msg.data);
+				console.log(msg);
+				switch (msg.type) {
+					case "init":
+						for (let i = 0; i < msg.data.length; i += 6) {
+							makeroom(
+								msg.data[i    ],
+								msg.data[i + 1],
+								msg.data[i + 2],
+								msg.data[i + 3],
+								msg.data[i + 4],
+								msg.data[i + 5],
+							);
+						}
+						break;
+					case "make":
+						msg.data[4]--;
+						makeroom(...msg.data);
+						break;
+					case "goto":
+						document.location = `/play?id=${msg.id}`;
+						break;
+					case "join":
+						rooms[msg.id].players++;
+						redoroom(msg.id);
+						break;
+					case "leave":
+						rooms[msg.id].players--;
+						redoroom(msg.id);
+						break;
+					default:
+						break;
+				}
+			};
+
+			make.onclick = () => {
+				ws.send(JSON.stringify({
+					type    : "make",
+					gamemode: 0, // tic tac toe
+					roomname: "temproomname"
+				}));
+			};
+
+		</script>
+
+	</body>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+
+<html>
+
+	<head>
+		<title> Sollys Dream </title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8">
+		<style>
+			body {
+				margin: 0;
+				padding: 0;
+			}
+			#container {
+				position: absolute;
+				left: 50%;
+				top: 50%;
+				transform: translate(-50%, -50%);
+				text-align: center;
+			}
+			#input {
+				display: inline-block;
+				white-space: nowrap;
+			}
+		</style>
+	</head>
+
+	<body>
+
+		<script> 
+	
+			if (document.cookie) {document.location = '/rooms';}		
+
+			let inp, sub;
+
+			window.onload = () => {
+
+				check = (/[a-zA-Z0-9_]/);
+
+				inp = document.getElementById("inp");
+				sub = document.getElementById("sub");
+
+				inp.onkeypress = (e) => {
+					
+					if (e.key === "Enter") {
+						sub.onclick();
+					} else if (check.test(e.key)) {
+						inp.value += e.key;
+						e.preventDefault();
+					} else if ((e.key !== 8) && (e.key !== 46)) {
+						e.preventDefault();
+					}
+				};
+
+				sub.onclick = () => {
+					 document.cookie = `${inp.value};SameSite=Strict`; 
+					 if (document.location.search === "") {
+					 	document.location = "/rooms";	
+					 } else {
+					 	document.location = decodeURIComponent(document.location.search.split("=")[1]); 2
+					 }
+				};
+				
+			};
+
+		</script>
+
+		<div id="container">
+			Name:
+			<div id="input">
+				<input 
+					id="inp" type="text" minlength="3" required
+				>
+				<button id="sub"> O </button>
+			</div>
+		</div>
+		
+	</body>
