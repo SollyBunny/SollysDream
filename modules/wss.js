@@ -96,7 +96,7 @@ module.exports.server = (s) => {
 			});
 			//console.log(ws.room);
 			// data which handelers use to run games (stops from polluting player);
-			Object.defineProperty(ws, "gamedata", {
+			Object.defineProperty(ws, "data", {
 				value   : {},
 				writable: true
 			});

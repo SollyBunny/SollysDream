@@ -4,5 +4,11 @@
 		"name": "Tic Tac Toe",
 		"minplayers": 2,
 		"maxplayers": 2
+	},
+	"1": {
+		"id"  : 1,
+		"name": "Bomb",
+		"minplayers": 2,
+		"maxplayers": 15
 	}
 }

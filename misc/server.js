@@ -7,7 +7,10 @@ module.exports = (page) => {switch (page) {
 		return "../server/admin.js";
 
 	case 0: // Tic Tac Toe
-		return "../server/games/tictactoe.js";
+		return "../server/game/tictactoe.js";
+
+	case 1: // Bomb
+		return "../server/game/bomb.js";
 
 	default:
 		return undefined;

@@ -60,6 +60,12 @@ let file, mime, cookie; module.exports = (page, query) => { switch (page) {
 		cookie = false;
 		break;
 
+	case "/game/1":
+		file = "./page/game/bomb.html";
+		mime = "text/html";
+		cookie = false;
+		break;
+
 	/*case "/furriesonly":
 		file = "./page/reggie.mp4";
 		mime = "video/mp4";

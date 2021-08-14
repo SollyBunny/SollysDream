@@ -22,12 +22,16 @@ function _destroy(ws) {
 			id  : ws.room.id
 		}));
 	});	
+	const.log(ws.id);
 	ws.room.players.forEach((i) => { //kick everyone
-		clients[i].send(JSON.stringify({ // this is just wserror but its used only here so ... im putting it in manually
-			type: "err",
-			msg: "Invalid room ID"
-		}))
-		clients[i].close();
+		console.log("i: ", i)
+		if (i !== ws.id) {
+			clients[i].send(JSON.stringify({ // this is just wserror but its used only here so ... im putting it in manually
+				type: "err",
+				msg: "Invalid room ID"
+			}))
+			clients[i].close();
+		}
 		delete clients[ws.id];
 	});
 	delete rooms[ws.room.id];
