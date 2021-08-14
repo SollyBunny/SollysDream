@@ -48,8 +48,7 @@ module.exports.onconnect = (ws) => {
 	ws.room.players.forEach((m) => {
 		initdata[i    ] = clients[m].id;
 		initdata[i + 1] = clients[m].name;
-		initdata[i + 2] = clients[m].gamedata;
-		i += 3;
+		i += 2;
 	});
 
 	ws.send(JSON.stringify({
@@ -99,7 +98,7 @@ module.exports.onmessage = (ws, data) => {
 
 		case "start":
 
-			if (ws !== ws.room.owner) {
+			if (ws.id !== ws.room.owner.id) {
 				wserror(ws, "You're not the owner");
 				return;
 			}

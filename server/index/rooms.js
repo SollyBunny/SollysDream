@@ -22,17 +22,21 @@ function _destroy(ws) {
 			id  : ws.room.id
 		}));
 	});	
-	console.log(ws.id);
+	//console.log(ws.room.owner.id);
+	//console.log(ws.room.players)
 	ws.room.players.forEach((i) => { //kick everyone
-		console.log("i: ", i)
-		if (i !== ws.id) {
+		//console.log("i: ", i)
+		//console.log(clients[i]);
+		if (i !== ws.room.owner.id) {
 			clients[i].send(JSON.stringify({ // this is just wserror but its used only here so ... im putting it in manually
 				type: "err",
 				msg: "Invalid room ID"
-			}))
+			}));
 			clients[i].close();
+			clients[i].room = undefined;
+			clients[i].handle = undefined;
 		}
-		delete clients[ws.id];
+		delete clients[i];
 	});
 	delete rooms[ws.room.id];
 }
@@ -114,8 +118,8 @@ module.exports.onmessage = (ws, data) => {
 					data.roomname,
 					ws.name,
 					0,
-					[],
-					false
+					false,
+					//false
 				]
 			}));
 			/*sendallexcept(ws.id, JSON.stringify({

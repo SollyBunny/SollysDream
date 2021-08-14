@@ -169,11 +169,10 @@
 				console.log(msg);
 				switch (msg.type) {
 					case "init":
-						for (let i = 5; i < msg.data.length; i += 3) {
+						for (let i = 5; i < msg.data.length; i += 2) {
 							addplayer(
 								msg.data[i    ],
-								msg.data[i + 1],
-								msg.data[i + 2]
+								msg.data[i + 1]
 							);
 						}
 						room.id       = msg.data[0];
@@ -193,15 +192,16 @@
 						updateplayercounter();
 						break;
 					case "err":
-						if (msg.msg === "Username is not valid") {
+						/*if (msg.msg === "Username is not valid") {
 							document.cookie = "";
 							document.location = "/";
 							return;
-						}
-						if (msg.msg === "Invalid room id" || msg.msg === "Room is full" || msg.msg === "Room is playing") {
+						}*/
+						//if (msg.msg === "Invalid room id" || msg.msg === "Room is full" || msg.msg === "Room is playing") {
 							document.location = "/rooms";
-						}
-						break;
+							return;
+						//}
+						//break;
 					case "ready":
 						if (self == room.owner) {
 							document.getElementById("waittext").innerHTML = "<button onclick='sendstart()'>Start!</button>";

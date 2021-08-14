@@ -86,7 +86,10 @@
 				redoroom(id);
 			}
 
-			
+			function deleroom(id) {
+				gamecontainer.removeChild(document.getElementById(id));
+				delete rooms[id];
+			}
 
 			msgevent = (msg) => {
 				msg = JSON.parse(msg.data);
@@ -109,7 +112,7 @@
 						makeroom(...msg.data);
 						break;
 					case "delete":
-						// TODO
+						deleroom(msg.id);
 						break;
 					case "goto":
 						document.location = `/play?${msg.id}`;
@@ -136,8 +139,9 @@
 			make.onclick = () => {
 				ws.send(JSON.stringify({
 					type    : "make",
-					gamemode: 0, // tic tac toe
-					roomname: "temproomname"
+					//gamemode: 0, // tic tac toe
+					gamemode: 1, // bomb
+					roomname: "bombgametest"
 				}));
 			};
 
