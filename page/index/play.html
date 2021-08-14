@@ -138,11 +138,11 @@
 					document.getElementById("waittext").innerHTML = `Waiting for ${temp} more players`;
 				}
 			}
-			function addplayer(id, name, data={}) {
+			function addplayer(id, name) {
 				room.players[id] = {
 					id  : id,
 					name: name,
-					data: data
+					data: {}
 				};
 				++room.playercount;
 				let newplayer = player.cloneNode();

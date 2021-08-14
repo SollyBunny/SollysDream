@@ -9,39 +9,11 @@
 			body {
 				margin: 0;
 				padding: 0;
-				overflow: hidden;
-			}
-			#container {
-				display: flex;
-				flex-direction: column;
-				height: 100%;
-			}
-			#top {
-				width: 100%;
-				background-color: black;
-				color: white;
-				padding: 1px;
-				text-align: center;
-			}
-			#botcontainer {
-				background-color: orange;
-				flex-grow: 1;
-			}
-			#bot {
-				display: flex;
-				flex-direction: row;
 				width: 100%;
 				height: 100%;
-			}
-			#left {
-				flex-grow: 1;
-				height: 100%;
-			}
-			#right {
-				background-color: blue;
 			}
 			#bomb {
-				position: relative;
+				position: absolute;
 				background-color: black;
 				width: 10vh;
 				height: 10vh;
@@ -52,11 +24,12 @@
 			}
 			.player {
 				position: absolute;
-				left: 50%;
-				top: 50%;
+				background-color: blue;
 				width: 5vh;
 				height: 5vh;
-				background-color: grey;
+				left: 50%;
+				top: 50%;
+				text-align: center;
 			}
 
 		</style>
@@ -68,7 +41,7 @@
 		
 		<script>
 
-			let bomb, player, myturn; // vars
+			let bomb, playercontainer, player, myturn; // vars
 			
 						
 			// init //
@@ -78,23 +51,24 @@
 				myturn = false;
 
 				bomb = document.getElementById("bomb"); 
+				playercontainer = document.getElementById("playercontainer"); 
 
 				player = document.createElement("div");
 				player.className = "player";
 
-				let it = 360 / room.players.length;
+				let it = (Math.PI * 2) / Object.keys(room.players).length;
 				let dir = 0;
 				Object.keys(room.players).forEach((i) => {
 					console.log(dir, i);
 
 					if (!room.players[i].data.elem) {
-						room.players[i].data.elem = player.clone();
+						room.players[i].data.elem = player.cloneNode();
 					}
 					
-					room.players[i].data.elem.style = `margin-left:${Math.sin(dir*0.01745329)*20-2.5}vh;margin-top:${Math.cos(dir*0.01745329)*20-2.5}vh;`;
+					room.players[i].data.elem.style = `margin-left:${Math.sin(dir)*20-2.5}vh;margin-top:${Math.cos(dir)*20-2.5}vh;`;
 					room.players[i].data.elem.innerHTML = room.players[i].name;
 
-					bomb.appendChild(room.players[i].data.elem);
+					playercontainer.appendChild(room.players[i].data.elem);
 					
 					dir += it;
 				});
@@ -121,5 +95,6 @@
 		</script>
 
 		<div id="bomb"> </div>
+		<div id="playercontainer"> </div>
 
 	</body>
