@@ -22,7 +22,7 @@ function _destroy(ws) {
 			id  : ws.room.id
 		}));
 	});	
-	const.log(ws.id);
+	console.log(ws.id);
 	ws.room.players.forEach((i) => { //kick everyone
 		console.log("i: ", i)
 		if (i !== ws.id) {
