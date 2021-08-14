@@ -3,24 +3,27 @@
 <html>
 
 	<head>
-		<title> Sollys Dream </title>
+		<title> Game </title>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8">
 		<style>
-			body {
-				margin: 0;
-				padding: 0;
-			}
-			#container {
-				position: absolute;
-				left: 50%;
-				top: 50%;
-				transform: translate(-50%, -50%);
+
+			#grid {
+				display: flex;
 				text-align: center;
 			}
-			#input {
-				display: inline-block;
-				white-space: nowrap;
+
+			.row {
+				display: flex;
+				flex: 1;
 			}
+
+			.cell {
+				text-align: center;
+				cursor: pointer;
+				font-size: 60px;
+				flex: 1;
+			}
+			
 		</style>
 	</head>
 
@@ -28,24 +31,77 @@
 
 		<script> 
 	
-			ws = window.parent.ws
+			let ws, room; window.init = (a, b) => { ws = a; room = b; console.log("Game initialized"); start(); };
 
-			window.onload = () => {
+			let myturn = false;
+			let x      = "O";
+			let y      = "X";     
+			function start() {
 
-			
 				
-			};
+
+
+				
+			}
+
+			function setcell(id, a) {
+
+				let cell = document.getElementById(`c${id}`)
+				cell.onclick = undefined;
+				cell.innerHTML = a;
+				
+			}
+
+			function press(id) {
+				if (!myturn) { return }
+				ws.send(JSON.stringify({
+					type: "gamepress",
+					id  : id
+				}));
+				setcell(id, x);
+				myturn = false;
+			}
+
+			function msgevent(msg) { // already decoded json btw
+				console.log(msg);
+
+				switch (msg.type) {
+
+					case "gamestart":
+						let t = x;
+						x = y;
+						y = t;
+						myturn = true;
+						break;
+
+					case "gamepress":
+						setcell(msg.id, y);
+						myturn = true;
+						break;
+
+					default:
+						break;
+
+						
+				}
+
+				
+			}
 
 		</script>
 
-		<div id="container">
-			Name:
-			<div id="input">
-				<input 
-					id="inp" type="text" minlength="3" required
-				>
-				<button id="sub"> O </button>
-			</div>
-		</div>
+		<p> hi </p>
+
+		<div id="grid">
+            <div id="c0" onclick="press(0)" class="cell"></div>
+            <div id="c1" onclick="press(1)" class="cell"></div>
+            <div id="c2" onclick="press(2)" class="cell"></div>
+            <div id="c3" onclick="press(3)" class="cell"></div>
+            <div id="c4" onclick="press(4)" class="cell"></div>
+            <div id="c5" onclick="press(5)" class="cell"></div>
+            <div id="c6" onclick="press(6)" class="cell"></div>
+            <div id="c7" onclick="press(7)" class="cell"></div> 
+            <div id="c8" onclick="press(8)" class="cell"></div>
+        </div>
 		
-	</body>
+	</body> 

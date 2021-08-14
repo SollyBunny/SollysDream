@@ -99,22 +99,46 @@ module.exports = (s) => {
 				value   : ws.url.query.split("=")[1],
 				writable: true
 			});
+			console.log(ws.room);
 			// data which handelers use to run games (stops from polluting player);
 			Object.defineProperty(ws, "gamedata", {
 				value   : {},
 				writable: true
 			});
 			// first check if room exists
-			if (!(ws.room in rooms)) {
+			if ((ws.room in rooms)) {
+				ws.room = rooms[ws.room];
+			} else {
 				wserror(ws, "Invalid room id");
 				return;
 			}
-			if (rooms[ws.room].players.length === gamemode[rooms[ws.room].gamemode].maxplayers) {
+			// check if room is full
+			if (ws.room.players.length === ws.room.gamemode.maxplayers) {
 				wserror(ws, "Room is full");
 				return;
 			}
-			rooms[ws.room].players.push(ws.id);
-			if (rooms[ws.room].playing) {// if playing use game handeler, otherwise use waiting handeler
+			// check if room is playing
+			if (ws.room.playing) {
+				wserror(ws, "Room is playing");
+				return;
+			} 
+			ws.room.players.push(ws.id);
+			// if the game hasnt started and theres no owner assume this player (the first player to join) is the owenr
+			if (ws.room.owner === undefined) {
+				ws.room.owner = ws;
+				console.log("set OWNER");
+			}
+			console.log("set OWNER NOT");
+			Object.defineProperty(ws, "handle", {
+				value   : require("../server/index/wait.js"),
+				writable: true
+			});
+			Object.defineProperty(ws, "gamehandle", {
+				value   : require(server(ws.room.gamemode.id)),
+				writable: true
+			});
+			ws.gamehandle.init(clients, rooms);
+			/*if (rooms[ws.room].playing) {// if playing use game handeler, otherwise use waiting handeler
 				Object.defineProperty(ws, "handle", {
 					value   : server(rooms[ws.room].gametype),
 					writable: true
@@ -123,19 +147,13 @@ module.exports = (s) => {
 				if (ws.handle) {
 					ws.handle = require(ws.handle)
 				} else {
-					wserror(ws, "Invalid game");
+					//wserror(ws, "Invalid game");
+									
 					return;
 				}
-			} else {
-				// if the game hasnt started and theres no owner assume this player (the first player to join) is the owenr
-				if (rooms[ws.room].owner === undefined) {
-					rooms[ws.room].owner = ws.id;
-				}
-				Object.defineProperty(ws, "handle", {
-					value   : require("../server/index/wait.js"),
-					writable: true
-				});
-			}
+			// } else {
+			}*/
+			
 		}
 
 		// If the handeler is undefined it means that theres.. well no handeler available so just close it.
@@ -158,13 +176,17 @@ module.exports = (s) => {
 				return;
 			}
 			// Handle the msg
-			ws.handle.onmessage(ws, data);
+			if (ws.room && ws.room.playing) {
+				ws.gamehandle.onmessage(ws, data);
+			} else {
+				ws.handle.onmessage(ws, data);
+			}
 		});
 	
 		ws.on("close", () => {
 			if (ws.room) { // if player in a room, remove them
 				
-				rooms[ws.room].players.splice(rooms[ws.room].players.indexOf(ws.id), 1);
+				ws.room.players.splice(ws.room.players.indexOf(ws.id), 1);
 				//delete rooms[ws.room].players[ws.id];
 			
 			}

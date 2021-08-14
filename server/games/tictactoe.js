@@ -1,66 +1,90 @@
 let clients, rooms;
 module.exports.init = (a, b) => { clients = a; rooms = b };
 
-module.exports.maxplayers = 2;
+const win = [
+	[0, 1, 2],
+	[3, 4, 5],
+	[6, 7, 8],
+	[0, 3, 6],
+	[1, 4, 7],
+	[2, 5, 8],
+	[0, 4, 8],
+	[2, 4, 6]
+];
 
-function sendallexcept(id, msg) {
-	rooms[clients[id].room].players.forEach((m) => {
+function checkwin(board, p) {
+	for (let i = 0; i < win.length; ++i) {
+		if (
+			(board[win[i][0]] === p) &&
+			(board[win[i][1]] === p) &&
+			(board[win[i][2]] === p)
+		) {
+			return true;
+		}
+	}
+	return false;
+}
+
+function sendallexcept(ws, msg) {
+	clients[id].room.players.forEach((m) => {
 		console.log(m)
-		if (m !== id) {
+		if (m !== ws.id) {
 			clients[m].send(msg);
 		}
 	});
 }
 
-module.exports.onconnect = (id) => {
+module.exports.onconnect = (ws) => {
 
-	let initdata = new Array(rooms[clients[id].room].players.length * 2 + 4);
-
-	initdata[0] = rooms[clients[id].room].id;
-	initdata[1] = rooms[clients[id].room].gametype;
-	initdata[2] = rooms[clients[id].room].roomname;
-	initdata[3] = rooms[clients[id].room].ownername;
 	
-	let i = 4;
-	rooms[clients[id].room].players.forEach((m) => {
-		initdata[i    ] = clients[m].id;
-		initdata[i + 1] = clients[m].name;
-		i += 2;
-	});
 
-	clients[id].send(JSON.stringify({
-		type: "init",
-		data: initdata
-	}));
+};
 
-	sendallexcept(id, JSON.stringify({
-		type: "join",
+module.exports.start = (ws) => {
+	ws.room.data = {
+		turn: 0,
 		data: [
-			id,
-			clients[id].name
+			undefined, undefined, undefined, 
+			undefined, undefined, undefined, 
+			undefined, undefined, undefined, 
 		]
+	};
+	console.log(ws.room.players);
+	clients[ws.room.players[ws.room.data.turn]].send(JSON.stringify({
+		type: "gamestart"
 	}));
+}
+
+module.exports.ondisconnect = (ws) => {
 
 };
 
-module.exports.ondisconnect = (id) => {
-	console.log("LEAAVE")
-	require("rooms.js").sendall(JSON.stringify({
-		type: "leave",
-		id  : clients[id].room
-	}));
-	sendallexcept(id, JSON.stringify({
-		type: "leave",
-		id  : id
-	}));
-};
-
-module.exports.onmessage = (id, data) => {
-
-	console.log(data);
+module.exports.onmessage = (ws, data) => {
 
 	switch (data.type) {
 
+		case "gamepress":
+			if ((data.id < 0) || (data.id > 8)) {
+				return;
+			}
+			ws.room.data.data[data.id] = ws.room.data.turn;
+			if (checkwin(ws.room.data.data, ws.room.data.turn)) {
+				clients[ws.room.players[0]].send(JSON.stringify({
+					type: "gamewin",
+					id  : ws.room.data.turn
+				}));
+				clients[ws.room.players[1]].send(JSON.stringify({
+					type: "gamewin",
+					id  : ws.room.data.turn
+				}));
+			}
+			ws.room.data.turn = (ws.room.data.turn == 1) ? 0 : 1;
+			clients[ws.room.players[ws.room.data.turn]].send(JSON.stringify({
+				type: "gamepress",
+				id  : data.id
+			}));
+			break;
+			
 		default:
 			break;
 			

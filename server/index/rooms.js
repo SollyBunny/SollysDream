@@ -24,9 +24,9 @@ module.exports.onconnect = (ws) => {
 	console.log(rooms);
 	keys.forEach((m) => {
 		initdata[i    ] = m;
-		initdata[i + 1] = rooms[m].gamemode;
+		initdata[i + 1] = rooms[m].gamemode.id;
 		initdata[i + 2] = rooms[m].roomname;
-		initdata[i + 3] = clients[rooms[m].owner].name;
+		initdata[i + 3] = rooms[m].owner ? rooms[m].owner.name : "No One?";
 		initdata[i + 4] = rooms[m].players.length; 
 		initdata[i + 5] = rooms[m].playing;
 		i += 6;	
@@ -51,25 +51,31 @@ module.exports.onmessage = (ws, data) => {
 	switch (data.type) {
 
 		case "make":
-			ws.room = new Date().getTime();
-			rooms[ws.room] = {
-				id          : ws.room,
-				gamemode    : data.gamemode,
+			if (!(gamemode[data.gamemode])) {
+				return;
+			}
+			let t = new Date().getTime();
+			rooms[t] = {
+				id          : t,
+				gamemode    : gamemode[data.gamemode],
 				roomname    : data.roomname,
 				owner       : undefined, // we dont know their final id so just leave empty for now
 				players     : [], // list of ids referneced to clients[id]
-				playing     : false
+				playing     : false,
+				data        : {}
 			};
 			ws.send(JSON.stringify({
 				type : "goto",
-				id   : ws.room
+				id   : t
 			}));
-			console.log(rooms[ws.room])
+			ws.room = rooms[t];
+			console.log(rooms)
+			
 			sendallexcept(ws.id, JSON.stringify({
 				type      : "make",
 				data 	  : [
-					ws.room,
-					data.gamemode,
+					ws.room.id,
+					ws.room.gamemode.id,
 					data.roomname,
 					ws.name,
 					0,

@@ -4,7 +4,7 @@ let clients, rooms;
 module.exports.init = (a, b) => { clients = a; rooms = b };
 
 function sendallexcept(ws, msg) {
-	rooms[ws.room].players.forEach((i) => {
+	ws.room.players.forEach((i) => {
 		console.log("WEJAIJDS", i);
 		if (i !== ws.id) {
 			clients[i].send(msg);
@@ -13,7 +13,7 @@ function sendallexcept(ws, msg) {
 }
 
 function sendall(ws, msg) {
-	rooms[ws.room].players.forEach((i) => {
+	ws.room.players.forEach((i) => {
 		console.log("WAAAA", i)
 		clients[i].send(msg);
 	});
@@ -38,16 +38,16 @@ module.exports.onconnect = (ws) => {
 		}));
 	});
 
-	let initdata = new Array(rooms[ws.room].players.length * 2 + 4);
+	let initdata = new Array(ws.room.players.length * 2 + 4);
 
-	initdata[0] = rooms[ws.room].id;
-	initdata[1] = rooms[ws.room].gamemode;
-	initdata[2] = rooms[ws.room].roomname;
-	initdata[3] = rooms[ws.room].owner;
+	initdata[0] = ws.room.id;
+	initdata[1] = ws.room.gamemode.id;
+	initdata[2] = ws.room.roomname;
+	initdata[3] = ws.room.owner.id;
 	initdata[4] = ws.id // give their own id to reference themselves
 	
 	let i = 5;
-	rooms[ws.room].players.forEach((m) => {
+	ws.room.players.forEach((m) => {
 		initdata[i    ] = clients[m].id;
 		initdata[i + 1] = clients[m].name;
 		initdata[i + 2] = clients[m].gamedata;
@@ -67,7 +67,7 @@ module.exports.onconnect = (ws) => {
 		]
 	}));
 
-	if (rooms[ws.room].players.length >= gamemode[rooms[ws.room].gamemode].minplayers) {
+	if (ws.room.players.length >= ws.room.gamemode.minplayers) {
 		sendall(ws, JSON.stringify({
 			type: "ready"	
 		}));
@@ -77,14 +77,14 @@ module.exports.onconnect = (ws) => {
 
 module.exports.ondisconnect = (ws) => {
 	// if the player was the owner of their room, kick everyone, remove the room, and send messages telling the room has been closed
-	if (rooms[ws.room].owner === ws.id) {
+	if (ws.room.owner === ws.id) {
 		require("../../server/index/rooms.js").players.forEach((m) => {
 			clients[m].send(JSON.stringify({
 				type: "delete",
 				id  : ws.room
 			}));
 		});	
-		rooms[ws.room].players.forEach((i) => {
+		ws.room.players.forEach((i) => {
 			clients[i].room   = undefined;
 			clients[i].handle = undefined; // effectivly supress all handling of closing
 			clients[i].send(JSON.stringify({
@@ -92,7 +92,7 @@ module.exports.ondisconnect = (ws) => {
 				msg: "Invalid room id"
 			}));
 		});
-		delete rooms[ws.room];
+		delete rooms[ws.room.id];
 	} else {	
 		require("../../server/index/rooms.js").players.forEach((m) => {
 			clients[m].send(JSON.stringify({
@@ -104,7 +104,7 @@ module.exports.ondisconnect = (ws) => {
 			type: "leave",
 			id  : ws.id
 		}));
-		if (rooms[ws.room].players.length < gamemode[rooms[ws.room].gamemode].minplayers) {
+		if (ws.room.players.length < ws.room.gamemode.minplayers) {
 			sendallexcept(ws, JSON.stringify({
 				type: "unready"	
 			}));
@@ -120,16 +120,27 @@ module.exports.onmessage = (ws, data) => {
 
 		case "start":
 
-			if (ws.id != rooms[ws.room].owner) {
+			if (ws !== ws.room.owner) {
 				wserror(ws, "You're not the owner");
 				return;
 			}
 
 			console.log("starting gmae!!!");
 
+			ws.room.playing = true;
+
+			require("../../server/index/rooms.js").players.forEach((m) => {
+				clients[m].send(JSON.stringify({
+					type: "start",
+					id  : ws.room.id
+				}));
+			});	
+
 			sendall(ws, JSON.stringify({
 				type: "start"
 			}));
+
+			ws.room.owner.gamehandle.start(ws);
 			
 			break;
 

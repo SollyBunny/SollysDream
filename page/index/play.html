@@ -44,15 +44,15 @@
 				list-style-type: none;
 				width: 100%;
 			}
-			#iframecotaniner {
-			
-			}
-			#iframecotaniner, iframe {
+			#iframecontainer {
 				width: 100%;
 				height: 100%;
 				margin: 0;
 			}
 			iframe {
+				width: 100%;
+				height: 100%;
+				margin: 0;
 				border: none;
 			}
 		</style>
@@ -76,7 +76,7 @@
 
 				<div id="waittext"></div>
 
-				<div id="iframecotainer"></div>
+				<div id="iframecontainer"></div>
 
 				
 
@@ -104,7 +104,8 @@
 
 			var self = undefined;
 			let iframe;
-			let iframecotainer = document.getElementById("iframecotainer");
+			let iframequeue = [];
+			let iframecontainer = document.getElementById("iframecontainer");
 			let playercontainer = document.getElementById("boxes");
 			let playercounter = document.getElementById("boxcount");
 			let player = document.createElement("button");
@@ -186,7 +187,7 @@
 						updateplayercounter();
 						break;
 					case "err":
-						if (msg.msg === "Invalid room id" || msg.msg === "Room is full") {
+						if (msg.msg === "Invalid room id" || msg.msg === "Room is full" || msg.msg === "Room is playing") {
 							document.location = "/rooms";
 						}
 						break;
@@ -201,14 +202,29 @@
 						break;
 					case "start":
 						iframe = document.createElement("iframe");
-						iframe.src = `https://sollysdream.ddns.net/game/${room.gamemode}`;
-						iframe.name = "game";
-						iframe.width = "100%";
+						iframe.onload = () => {
+							iframe.contentWindow.console.log = console.log;
+							iframe.contentWindow.init(ws, room);
+							iframequeue.forEach((i) => {
+								iframe.contentWindow.msgevent(i);	
+							});
+							delete iframequeue;
+						};
+						iframe.src    = `https://sollysdream.ddns.net/game/${room.gamemode}`;
+						iframe.name   = "game";
+						//iframe.id     = "id";
+						iframe.width  = "100%";
 						iframe.height = "100%";
-						iframecotainer.appendChild(iframe);
-						iframecotainer.style.display = "block";
+						iframecontainer.appendChild(iframe);
+						iframecontainer.style.display = "block";
 						waittext.style.display = "none";
+						break;
 					default:
+						if (iframe.contentWindow.init) {
+							iframe.contentWindow.msgevent(msg);
+							return;
+						}
+						iframequeue.push(msg);
 						break;
 				}
 			};
