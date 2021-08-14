@@ -94,7 +94,7 @@ module.exports.server = (s) => {
 				value   : rooms[ws.url.query],
 				writable: true
 			});
-			console.log(ws.room);
+			//console.log(ws.room);
 			// data which handelers use to run games (stops from polluting player);
 			Object.defineProperty(ws, "gamedata", {
 				value   : {},
@@ -186,8 +186,9 @@ module.exports.server = (s) => {
 				// if there are no more players left or the player leaving was the owner close the room
 				if (
 					(ws.room.players.length === 0) ||
-					(ws.room.owner === ws.id)
+					(ws.room.owner.id === ws.id)
 				) {
+					console.log("destroyed");
 					ws.room._destroy(ws);
 					return;
 				}

@@ -23,7 +23,11 @@ function _destroy(ws) {
 		}));
 	});	
 	ws.room.players.forEach((i) => { //kick everyone
-		wserror(clients[i], "Invalid room ID");
+		clients[i].send(JSON.stringify({ // this is just wserror but its used only here so ... im putting it in manually
+			type: "err",
+			msg: "Invalid room ID"
+		}))
+		clients[i].close();
 		delete clients[ws.id];
 	});
 	delete rooms[ws.room.id];
@@ -45,7 +49,7 @@ module.exports.onconnect = (ws) => {
 	let initdata = new Array(keys.length * 6);
 
 	let i = 0;
-	console.log(rooms);
+
 	keys.forEach((m) => {
 		initdata[i    ] = m;
 		initdata[i + 1] = rooms[m].gamemode.id;
@@ -96,7 +100,7 @@ module.exports.onmessage = (ws, data) => {
 				id   : tid
 			}));
 			//ws.room = rooms[t];
-			console.log(rooms)
+			//console.log(rooms)
 			
 			sendallexcept(ws.id, JSON.stringify({
 				type      : "make",
