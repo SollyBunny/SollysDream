@@ -47,7 +47,9 @@ module.exports.start = (ws) => {
 			undefined, undefined, undefined, 
 			undefined, undefined, undefined, 
 			undefined, undefined, undefined, 
-		]
+		],
+		lastturn: undefined,
+		turncount: 0
 	};
 	console.log(ws.room.players);
 	clients[ws.room.players[ws.room.data.turn]].send(JSON.stringify({
@@ -67,16 +69,16 @@ module.exports.onmessage = (ws, data) => {
 			if ((data.id < 0) || (data.id > 8)) {
 				return;
 			}
+			if (ws.room.data.lastturn === ws.id) {
+				return;
+			}
+			ws.room.data.lastturn = ws.id;
+			ws.room.data.turncount++;
 			ws.room.data.data[data.id] = ws.room.data.turn;
 			if (checkwin(ws.room.data.data, ws.room.data.turn)) {
-				clients[ws.room.players[0]].send(JSON.stringify({
-					type: "gamewin",
-					id  : ws.room.data.turn
-				}));
-				clients[ws.room.players[1]].send(JSON.stringify({
-					type: "gamewin",
-					id  : ws.room.data.turn
-				}));
+				ws.room._win(ws);
+			} else if (ws.room.data.turncount === 9) {
+				ws.room._win(ws, true); //draw
 			}
 			ws.room.data.turn = (ws.room.data.turn == 1) ? 0 : 1;
 			clients[ws.room.players[ws.room.data.turn]].send(JSON.stringify({

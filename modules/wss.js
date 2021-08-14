@@ -33,9 +33,11 @@ let clients = {};
 		3. Create/delete/edit rooms (and their data)
 */
 let rooms   = {};
+module.exports.rooms = rooms;
 
+// behaviour moved to https.js
 // The regex check to see if a username is valid (only contains a-zA-Z0-9_) so that they can't include html elements (arbritrary code execution)
-let check = (/^[a-zA-Z0-9_]+$/);
+//let check = (/^[a-zA-Z0-9_]+$/);
 
 // Short hand to send an error to client then close it
 function wserror(ws, err) {
@@ -47,7 +49,7 @@ function wserror(ws, err) {
 	console.log("WSS error IP:", ws.ip, err);
 }
 
-module.exports = (s) => {
+module.exports.server = (s) => {
 
 	const wss = new ws.Server({
 		server: s,
@@ -74,29 +76,22 @@ module.exports = (s) => {
 			writable: false
 		});
 
-		// If the username isn't valid kick them
-		console.log(ws.name);
-		if (!(check.test(ws.name))) {
-			wserror(ws, "Username does not match " + check.toString());
-			return;
-		};
-
 		/*
 			The handeler is the script which handles all the events for a specific game type
 			This allows me to abstract handling making code cleaner.
 		*/
 		if (ws.url.query === null) { // We aren't using the room system so just hand it over to the handeler
-			Object.defineProperty(ws, "room", {
+			/*Object.defineProperty(ws, "room", {
 				value   : undefined,
 				writable: true
-			});
+			});*/
 			Object.defineProperty(ws, "handle", {
 				value   : require(server(ws.url.pathname)),
 				writable: true
 			});
 		} else { // A room id has been specified in the query so we have to figure out what gamemode (what handeler to use)
 			Object.defineProperty(ws, "room", {
-				value   : ws.url.query.split("=")[1],
+				value   : rooms[ws.url.query],
 				writable: true
 			});
 			console.log(ws.room);
@@ -105,30 +100,31 @@ module.exports = (s) => {
 				value   : {},
 				writable: true
 			});
-			// first check if room exists
-			if ((ws.room in rooms)) {
-				ws.room = rooms[ws.room];
-			} else {
-				wserror(ws, "Invalid room id");
-				return;
-			}
-			// check if room is full
-			if (ws.room.players.length === ws.room.gamemode.maxplayers) {
-				wserror(ws, "Room is full");
-				return;
-			}
-			// check if room is playing
-			if (ws.room.playing) {
-				wserror(ws, "Room is playing");
-				return;
-			} 
+			/*
+				// first check if room exists
+				if ((ws.room in rooms)) {
+					ws.room = rooms[ws.room];
+				} else {
+					wserror(ws, "Invalid room id");
+					return;
+				}
+				// check if room is full
+				if (ws.room.players.length === ws.room.gamemode.maxplayers) {
+					wserror(ws, "Room is full");
+					return;
+				}
+				// check if room is playing
+				if (ws.room.playing) {
+					wserror(ws, "Room is playing");
+					return;
+				}
+			*/
+			// these are now being handeled in https.js so that no wss connection has to be made to redirect back. This means less redirects
 			ws.room.players.push(ws.id);
 			// if the game hasnt started and theres no owner assume this player (the first player to join) is the owenr
 			if (ws.room.owner === undefined) {
 				ws.room.owner = ws;
-				console.log("set OWNER");
 			}
-			console.log("set OWNER NOT");
 			Object.defineProperty(ws, "handle", {
 				value   : require("../server/index/wait.js"),
 				writable: true
@@ -184,7 +180,17 @@ module.exports = (s) => {
 		});
 	
 		ws.on("close", () => {
+			
 			if (ws.room) { // if player in a room, remove them
+
+				// if there are no more players left or the player leaving was the owner close the room
+				if (
+					(ws.room.players.length === 0) ||
+					(ws.room.owner === ws.id)
+				) {
+					ws.room._destroy(ws);
+					return;
+				}
 				
 				ws.room.players.splice(ws.room.players.indexOf(ws.id), 1);
 				//delete rooms[ws.room].players[ws.id];

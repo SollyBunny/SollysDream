@@ -18,7 +18,10 @@
 			#game {
 				flex-grow: 1;
 				border: 1px black solid;
-				background-color: red;
+			}
+			#wintext {
+				text-align: center;
+				width: 100%;
 			}
 			#waittext {
 				text-align: center;
@@ -74,8 +77,11 @@
 
 			<div id="game">
 
-				<div id="waittext"></div>
-
+				<div id="waitcontainer">
+					<div id="wintext"></div>
+					<div id="waittext"></div>
+				</div>
+				
 				<div id="iframecontainer"></div>
 
 				
@@ -187,6 +193,11 @@
 						updateplayercounter();
 						break;
 					case "err":
+						if (msg.msg === "Username is not valid") {
+							document.cookie = "";
+							document.location = "/";
+							return;
+						}
 						if (msg.msg === "Invalid room id" || msg.msg === "Room is full" || msg.msg === "Room is playing") {
 							document.location = "/rooms";
 						}
@@ -201,26 +212,52 @@
 					case "unready":
 						break;
 					case "start":
-						iframe = document.createElement("iframe");
-						iframe.onload = () => {
-							iframe.contentWindow.console.log = console.log;
-							iframe.contentWindow.init(ws, room);
-							iframequeue.forEach((i) => {
-								iframe.contentWindow.msgevent(i);	
-							});
-							delete iframequeue;
-						};
-						iframe.src    = `https://sollysdream.ddns.net/game/${room.gamemode}`;
-						iframe.name   = "game";
-						//iframe.id     = "id";
-						iframe.width  = "100%";
-						iframe.height = "100%";
-						iframecontainer.appendChild(iframe);
+
+						if (iframe) {
+							//console.log("reinit thing")
+							iframe.contentWindow._restart();
+							/*iframe.addEventListener("load", () => {
+								iframe.contentWindow.console.log = console.log;
+								iframe.contentWindow.init(ws, room);
+								iframequeue.forEach((i) => {
+									iframe.contentWindow.msgevent(i);	
+								});
+								iframequeue = [];
+								console.log("DONNE");
+							})*/
+						} else {
+							iframe = document.createElement("iframe");
+							iframe.onload = () => {
+								iframe.contentWindow.console.log = console.log;
+								iframe.contentWindow._init(ws, room);
+								iframequeue.forEach((i) => {
+									iframe.contentWindow.msgevent(i);	
+								});
+								iframequeue = [];
+							};
+							iframe.src    = `https://sollysdream.ddns.net/game/${room.gamemode}`;
+							iframe.name   = "game";
+							//iframe.id     = "id";
+							iframe.width  = "100%";
+							iframe.height = "100%";
+							iframecontainer.appendChild(iframe);
+						}
 						iframecontainer.style.display = "block";
-						waittext.style.display = "none";
+						waitcontainer.style.display = "none";
 						break;
+
+					case "gamewin":
+						if (msg.id === 0) {
+							wintext.innerHTML = "Draw";								
+						} else {
+							wintext.innerHTML = `${room.players[msg.id].name} (${msg.id}) won!`;
+						}
+						iframecontainer.style.display = "none";
+						waitcontainer.style.display = "block";
+						//let iframequeue = [];
+						// not a mssing break
 					default:
-						if (iframe.contentWindow.init) {
+						if (iframe.contentWindow._init) {
 							iframe.contentWindow.msgevent(msg);
 							return;
 						}

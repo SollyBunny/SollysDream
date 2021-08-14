@@ -56,7 +56,7 @@
 					 if (document.location.search === "") {
 					 	document.location = "/rooms";	
 					 } else {
-					 	document.location = decodeURIComponent(document.location.search.split("=")[1]); 2
+					 	document.location = decodeURIComponent(document.location.search.slice(1)); 2
 					 }
 				};
 				

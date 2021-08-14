@@ -5,7 +5,6 @@ module.exports.init = (a, b) => { clients = a; rooms = b };
 
 function sendallexcept(ws, msg) {
 	ws.room.players.forEach((i) => {
-		console.log("WEJAIJDS", i);
 		if (i !== ws.id) {
 			clients[i].send(msg);
 		}	
@@ -14,7 +13,6 @@ function sendallexcept(ws, msg) {
 
 function sendall(ws, msg) {
 	ws.room.players.forEach((i) => {
-		console.log("WAAAA", i)
 		clients[i].send(msg);
 	});
 }
@@ -34,7 +32,7 @@ module.exports.onconnect = (ws) => {
 	require("../../server/index/rooms.js").players.forEach((m) => {
 		clients[m].send(JSON.stringify({
 			type: "join",
-			id  : ws.room
+			id  : ws.room.id
 		}));
 	});
 
@@ -76,39 +74,20 @@ module.exports.onconnect = (ws) => {
 };
 
 module.exports.ondisconnect = (ws) => {
-	// if the player was the owner of their room, kick everyone, remove the room, and send messages telling the room has been closed
-	if (ws.room.owner === ws.id) {
-		require("../../server/index/rooms.js").players.forEach((m) => {
-			clients[m].send(JSON.stringify({
-				type: "delete",
-				id  : ws.room
-			}));
-		});	
-		ws.room.players.forEach((i) => {
-			clients[i].room   = undefined;
-			clients[i].handle = undefined; // effectivly supress all handling of closing
-			clients[i].send(JSON.stringify({
-				type: "err",
-				msg: "Invalid room id"
-			}));
-		});
-		delete rooms[ws.room.id];
-	} else {	
-		require("../../server/index/rooms.js").players.forEach((m) => {
-			clients[m].send(JSON.stringify({
-				type: "leave",
-				id  : ws.room
-			}));
-		});
-		sendallexcept(ws, JSON.stringify({
+	require("../../server/index/rooms.js").players.forEach((m) => {
+		clients[m].send(JSON.stringify({
 			type: "leave",
-			id  : ws.id
+			id  : ws.room.id
 		}));
-		if (ws.room.players.length < ws.room.gamemode.minplayers) {
-			sendallexcept(ws, JSON.stringify({
-				type: "unready"	
-			}));
-		}
+	});
+	sendallexcept(ws, JSON.stringify({
+		type: "leave",
+		id  : ws.id
+	}));
+	if (ws.room.players.length < ws.room.gamemode.minplayers) {
+		sendallexcept(ws, JSON.stringify({
+			type: "unready"	
+		}));
 	}
 };
 

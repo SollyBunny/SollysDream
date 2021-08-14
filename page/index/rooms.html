@@ -63,8 +63,9 @@
 					room.onclick = undefined;
 					room.disabled = true;
 				} else {
+				
 					room.onclick = (e) => { 
-						document.location = `/play?id=${e.target.id}`; 
+						document.location = `/play?${e.srcElement.id}`; 
 					};
 					room.disabled = false;
 				}
@@ -104,11 +105,14 @@
 						}
 						break;
 					case "make":
-						msg.data[4]--;
+						//msg.data[4]--;
 						makeroom(...msg.data);
 						break;
+					case "delete":
+						// TODO
+						break;
 					case "goto":
-						document.location = `/play?id=${msg.id}`;
+						document.location = `/play?${msg.id}`;
 						break;
 					case "join":
 						rooms[msg.id].players++;
@@ -117,6 +121,12 @@
 					case "leave":
 						rooms[msg.id].players--;
 						redoroom(msg.id);
+						break;
+					case "err":
+						if (msg.msg === "Username is not valid") {
+							document.cookie = "";
+							document.location = "/";
+						}
 						break;
 					default:
 						break;

@@ -15,8 +15,10 @@ fs.watchFile("./misc/page.js", (e) => {
 	console.log("Reloaded page.js");
 });
 
+//The regex check to see if a username is valid (only contains a-zA-Z0-9_) so that they can't include html elements (arbritrary code execution)
+let check = (/^[a-zA-Z0-9_]+$/);
 
-module.exports = http.createServer({
+module.exports.server = http.createServer({
 	// Keys required for https, made by certbot (ty)
 	key  : fs.readFileSync("/etc/letsencrypt/live/sollysdream.ddns.net/privkey.pem"),
 	cert : fs.readFileSync("/etc/letsencrypt/live/sollysdream.ddns.net/cert.pem"),
@@ -28,15 +30,23 @@ module.exports = http.createServer({
 	// parsed.query    = id=abc
 	
 	// get filename & mimetype
-	// pass cookie aswell so that we can check if the user has a name (if it doesnt we need to redirect them)
-	let [filename, mime, cookie] = page(parsed.pathname);
+	// ask if a cookie is needed aswell (name) so we can redirect them to user select page
+	// pass in the search term aswell 
+	let [filename, mime, cookie] = page(parsed.pathname, parsed.query);
 
 
 	// if the page wants the user to have a cookie but there is none redirect it to the login page with a redirect query so we can redirect back to what they where doing
-	if (cookie === true && req.headers.cookie === undefined) {
-		req.url = "/login?redirect=" + encodeURIComponent(req.url);
+	// also check if their username is valid
+	if (
+		(cookie === true) && (
+			(req.headers.cookie === undefined) ||
+			(!check.test(req.headers.cookie))
+		)
+	) {
+		req.url = "/login?" + encodeURIComponent(req.url);
 		res.writeHead(307, {
-			"Location": req.url
+			"Location": req.url,
+			"Set-Cookie": ";SameSite=Strict" // empty out cookie
 		});
 		res.end();
 		console.log("HTTPS IP:", req.connection.remoteAddress, "Url:", req.url, "(307)");
@@ -45,11 +55,22 @@ module.exports = http.createServer({
 	
 	// if mimetype == undefined, the url wasn't found (ie 404)
 	// (also used to provide plain text responces, like for robots.txt which is empty)
-	if (mime == undefined) {
+	if (mime === undefined) {
 		res.end(filename);
 		console.log("HTTPS IP:", req.connection.remoteAddress, "Url:", req.url, "(404)");
 		return;
 	}
+
+	// if mimetype == 307, we want to redirect to the url
+	if (mime === 307) {
+		res.writeHead(307, {
+			"Location": filename
+		});
+		res.end();
+		console.log("HTTPS IP:", req.connection.remoteAddress, "Url:", req.url, "(307)");
+		return;
+	}
+	
 	console.log("HTTPS IP:", req.connection.remoteAddress, "Url:", req.url, "Cookie:", req.headers.cookie);
 
 	// Read and then serve file to the user

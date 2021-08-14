@@ -8,20 +8,24 @@
 		<style>
 
 			#grid {
-				display: flex;
+				display: grid;
+				/*grid-template-columns: repeat(3, auto); */
 				text-align: center;
-			}
+				grid-template-columns: 1fr 1fr 1fr;
+				grid-template-rows: 1fr 1fr 1fr;
+				gap: 1vw;
 
-			.row {
-				display: flex;
-				flex: 1;
 			}
 
 			.cell {
 				text-align: center;
+				width: 30vw;
+				height: 30vw;
+				border: 1px solid black;
 				cursor: pointer;
 				font-size: 60px;
-				flex: 1;
+				margin: 0;
+				padding: 0;
 			}
 			
 		</style>
@@ -30,23 +34,35 @@
 	<body>
 
 		<script> 
-	
-			let ws, room; window.init = (a, b) => { ws = a; room = b; console.log("Game initialized"); start(); };
 
-			let myturn = false;
-			let x      = "O";
-			let y      = "X";     
-			function start() {
+			let myturn, x, y; // vars
 
-				
+			
+			// init //
+			let ws, room; window._init = (a, b) => { ws = a; room = b; console.log("Game initialized"); _start(); };
+			function _start() {
 
-
+				myturn = false;
+				x      = "O";
+				y      = "X";     
 				
 			}
+			function _restart() {
+				
+				for (let id = 0; id < 9; ++id) {
+					let cell = document.getElementById(id);
+					cell.innerHTML = "";
+					cell.onclick = press;
+				}
+
+
+				_start();
+			}  
+			// init //
 
 			function setcell(id, a) {
 
-				let cell = document.getElementById(`c${id}`)
+				let cell = document.getElementById(id);
 				cell.onclick = undefined;
 				cell.innerHTML = a;
 				
@@ -54,6 +70,7 @@
 
 			function press(id) {
 				if (!myturn) { return }
+				id = id.srcElement ? id.srcElement.id : id;
 				ws.send(JSON.stringify({
 					type: "gamepress",
 					id  : id
@@ -75,6 +92,7 @@
 						break;
 
 					case "gamepress":
+						console.log("PRESSED")
 						setcell(msg.id, y);
 						myturn = true;
 						break;
@@ -93,15 +111,15 @@
 		<p> hi </p>
 
 		<div id="grid">
-            <div id="c0" onclick="press(0)" class="cell"></div>
-            <div id="c1" onclick="press(1)" class="cell"></div>
-            <div id="c2" onclick="press(2)" class="cell"></div>
-            <div id="c3" onclick="press(3)" class="cell"></div>
-            <div id="c4" onclick="press(4)" class="cell"></div>
-            <div id="c5" onclick="press(5)" class="cell"></div>
-            <div id="c6" onclick="press(6)" class="cell"></div>
-            <div id="c7" onclick="press(7)" class="cell"></div> 
-            <div id="c8" onclick="press(8)" class="cell"></div>
+            <div id="0" onclick="press(0)" class="cell"></div>
+            <div id="1" onclick="press(1)" class="cell"></div>
+            <div id="2" onclick="press(2)" class="cell"></div>
+            <div id="3" onclick="press(3)" class="cell"></div>
+            <div id="4" onclick="press(4)" class="cell"></div>
+            <div id="5" onclick="press(5)" class="cell"></div>
+            <div id="6" onclick="press(6)" class="cell"></div>
+            <div id="7" onclick="press(7)" class="cell"></div> 
+            <div id="8" onclick="press(8)" class="cell"></div>
         </div>
 		
 	</body> 

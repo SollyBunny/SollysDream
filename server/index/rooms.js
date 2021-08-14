@@ -5,6 +5,30 @@ module.exports.init = (a, b) => { clients = a; rooms = b };
 
 module.exports.players = [];
 
+function _win(ws, draw) {
+	ws.room.players.forEach((i) => {
+		clients[i].send(JSON.stringify({
+			type: "gamewin",
+			id  : draw ? 0 : ws.id
+		}))	
+	});
+	ws.room.playing = false;
+}
+
+function _destroy(ws) {
+	require("../../server/index/rooms.js").players.forEach((m) => {
+		clients[m].send(JSON.stringify({
+			type: "delete",
+			id  : ws.room.id
+		}));
+	});	
+	ws.room.players.forEach((i) => { //kick everyone
+		wserror(clients[i], "Invalid room ID");
+		delete clients[ws.id];
+	});
+	delete rooms[ws.room.id];
+}
+
 function sendallexcept(id, msg) {
 	module.exports.players.forEach((i) => {
 		if (i !== id) {
@@ -54,28 +78,31 @@ module.exports.onmessage = (ws, data) => {
 			if (!(gamemode[data.gamemode])) {
 				return;
 			}
-			let t = new Date().getTime();
-			rooms[t] = {
-				id          : t,
-				gamemode    : gamemode[data.gamemode],
+			let tid = new Date().getTime();
+			let tgm = gamemode[data.gamemode];
+			rooms[tid] = {
+				id          : tid,
+				gamemode    : tgm,
 				roomname    : data.roomname,
 				owner       : undefined, // we dont know their final id so just leave empty for now
 				players     : [], // list of ids referneced to clients[id]
 				playing     : false,
-				data        : {}
+				data        : {},
+				_win        : _win,
+				_destroy    : _destroy
 			};
 			ws.send(JSON.stringify({
 				type : "goto",
-				id   : t
+				id   : tid
 			}));
-			ws.room = rooms[t];
+			//ws.room = rooms[t];
 			console.log(rooms)
 			
 			sendallexcept(ws.id, JSON.stringify({
 				type      : "make",
 				data 	  : [
-					ws.room.id,
-					ws.room.gamemode.id,
+					tid,
+					tgm.id,
 					data.roomname,
 					ws.name,
 					0,
@@ -83,12 +110,16 @@ module.exports.onmessage = (ws, data) => {
 					false
 				]
 			}));
-			// not a missing break;
+			/*sendallexcept(ws.id, JSON.stringify({
+				type: "join",
+				id  : ws.room.id
+			}));*/
+			break;
 			
 		case "join":
 			sendallexcept(ws.id, JSON.stringify({
 				type: "join",
-				id  : ws.room
+				id  : ws.room.id
 			}));
 			break;
 
