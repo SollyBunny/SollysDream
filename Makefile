@@ -1,4 +1,5 @@
-$(touch _)
-_: .FORCE
+_:
 	node index.js
-.FORCE:
+
+priv:
+	doas setcap 'cap_net_bind_service=+ep' `which node`

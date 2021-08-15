@@ -65,7 +65,11 @@
 				} else {
 				
 					room.onclick = (e) => { 
-						document.location = `/play?${e.srcElement.id}`; 
+						if (e.target.tagName === "BUTTON") {
+							document.location = `/play?${e.target.id}`; 
+						} else {
+							document.location = `/play?${e.target.parentElement.id}`; 
+						}
 					};
 					room.disabled = false;
 				}

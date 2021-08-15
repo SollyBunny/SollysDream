@@ -1,5 +1,5 @@
 let clients, rooms;
-module.exports.init = (a, b) => { clients = a; rooms = b };
+module.exports.init = (a, b, c) => { clients = a; rooms = b };
 
 const win = [
 	[0, 1, 2],

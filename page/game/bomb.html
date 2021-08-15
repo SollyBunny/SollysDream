@@ -21,17 +21,62 @@
 				top: 50%;
 				margin-left: -5vh;
 				margin-top: -5vh;
+				animation: pulse 1s infinite;
 			}
-			.player {
+			.playercontainer {
 				position: absolute;
-				background-color: blue;
-				width: 5vh;
-				height: 5vh;
 				left: 50%;
 				top: 50%;
 				text-align: center;
+				/*background-color: green;*/
 			}
-
+			.playername {
+				transform: translate(0, -1em);
+			}
+			.playerbox {
+				width: 5vh;
+				height: 5vh;
+				background-color: blue;
+			}
+			.playerboxsel {
+				background-color: red !important;
+			}
+			.playertext{
+				/*transform: translate(0, 5vh);*/
+				overflow: visible;
+				max-width: 5vh;
+				position: relative;
+			}
+			#text {
+				position: absolute;
+				bottom: 0;
+				width: 100%;
+				left: 0;
+				right: 0;
+				border-top: 1px solid black;
+				height: 2em;
+				text-align: center;
+			}
+			@keyframes pulse {
+				0% {
+					transform: scale(0.8);
+				}
+				5% {
+					transform: scale(0.9);
+				}
+				10% {
+					transform: scale(0.8);
+				}
+				15% {
+					transform: scale(1);
+				}
+				50% {
+					transform: scale(0.8);
+				}
+				100% {
+					transform: scale(0.8);
+				}
+			}
 		</style>
 	</head>
 
@@ -41,34 +86,57 @@
 		
 		<script>
 
-			let bomb, playercontainer, player, myturn; // vars
+			const check = (/[a-zA-Z]/);
+
+			let bomb, playercontainercontainer, playercontainer, playerbox, playername, playertext, turn, text; // vars
 			
 						
 			// init //
-			let ws, room; window._init = (a, b) => { ws = a; room = b; console.log("Game initialized"); _start(); };
+			let ws, room, self; window._init = (a, b, c) => { ws = a; room = b; self = c; console.log("Game initialized"); _start(); };
 			function _start() {
 
-				myturn = false;
-
 				bomb = document.getElementById("bomb"); 
-				playercontainer = document.getElementById("playercontainer"); 
+				playercontainercontainer = document.getElementById("playercontainercontainer"); 
+				text = document.getElementById("text"); 
 
-				player = document.createElement("div");
-				player.className = "player";
+				playercontainer = document.createElement("div");
+				playercontainer.className = "playercontainer";
+
+				playername = document.createElement("div");
+				playername.className = "playername";
+
+				playerbox = document.createElement("div");
+				playerbox.className = "playerbox";
+
+				playertext = document.createElement("div");
+				playertext.className = "playertext";
 
 				let it = (Math.PI * 2) / Object.keys(room.players).length;
 				let dir = 0;
 				Object.keys(room.players).forEach((i) => {
 					console.log(dir, i);
 
-					if (!room.players[i].data.elem) {
-						room.players[i].data.elem = player.cloneNode();
-					}
-					
-					room.players[i].data.elem.style = `margin-left:${Math.sin(dir)*20-2.5}vh;margin-top:${Math.cos(dir)*20-2.5}vh;`;
-					room.players[i].data.elem.innerHTML = room.players[i].name;
+					room.players[i].data.lives = 3;
 
-					playercontainer.appendChild(room.players[i].data.elem);
+					if (!room.players[i].data.econtainer) { // init obj structure
+
+						room.players[i].data.econtainer = playercontainer.cloneNode();
+						room.players[i].data.ename      = playername.cloneNode();
+						room.players[i].data.ebox       = playerbox.cloneNode();
+						room.players[i].data.etext      = playertext.cloneNode();
+
+						room.players[i].data.econtainer.appendChild(room.players[i].data.ename);
+						room.players[i].data.econtainer.appendChild(room.players[i].data.ebox);
+						room.players[i].data.econtainer.appendChild(room.players[i].data.etext);
+						
+					}
+
+					room.players[i].data.econtainer.id = i;
+					room.players[i].data.econtainer.style = `margin-left:${Math.sin(dir)*20-2.5}vh;margin-top:${Math.cos(dir)*20-2.5}vh;`;
+
+					room.players[i].data.ename.innerHTML = room.players[i].name;
+
+					playercontainercontainer.appendChild(room.players[i].data.econtainer);
 					
 					dir += it;
 				});
@@ -76,25 +144,96 @@
 			}
 			function _restart() {
 				
-				bomb.innerHTML = "";
+				playercontainercontainer.innerHTML = "";
 
 				_start();
 			}  
 			// init //
 
+			function colorplayer(a, b) {
+				if (a) {
+					room.players[a].data.ebox.className = "playerbox";
+				}
+				room.players[b].data.ebox.className = "playerbox playerboxsel";
+			}
+
+			function textplayerupdate(id) {
+				console.log(room.players[id].data.etext.scrollWidth);
+				room.players[id].data.etext.style = `right:${(room.players[id].data.etext.scrollWidth / 2) - (room.players[id].data.etext.clientWidth / 2)}px`;
+			}
+
 			function msgevent(msg) { // already decoded json btw
-				console.log(msg);
 
 				switch (msg.type) {
+
+					case "gameinit":
+						turn = msg.start;
+						colorplayer(undefined, turn);
+						break;
+
+					case "gametype":
+						room.players[msg.id].data.etext.innerHTML += msg.letter;
+						textplayerupdate(msg.id);
+						break;
+
+					case "gameattempt":
+						room.players[msg.id].data.etext.innerHTML = "";
+						textplayerupdate(msg.id);
+						if (msg.turn) {
+							colorplayer(turn, msg.turn);
+							turn = msg.turn;
+						}
+						break;		
+
+					case "gameattemptresponce":
+						text.innerHTML = "";
+						room.players[self].data.etext.innerHTML = "";
+						textplayerupdate(self);
+						if (msg.id) {// if was succsessfull
+							colorplayer(turn, msg.id);
+							turn = msg.id;
+						} else {
+							//TODO
+						}
+						break;
+				
 					default:
 						break;
 				}
 
 			}
 
+			function attempt(id, str) {
+				console.log("attempt", id, str)
+			}
+
+			document.onkeydown = (e) => {
+				if (self !== turn) { return; }
+				e = e.key;
+				if (e.length > 1) {
+					if (e === "Enter") {
+						ws.send(JSON.stringify({
+							type: "gameattempt"
+						}))
+					}
+					return;
+				}
+				if (check.test(e)) {
+					console.log(e);
+					text.innerHTML += e;
+					room.players[self].data.etext.innerHTML += e;
+					textplayerupdate(self);
+					ws.send(JSON.stringify({
+						type: "gametype",
+						letter: e
+					}))
+				}
+			}
+
 		</script>
 
 		<div id="bomb"> </div>
-		<div id="playercontainer"> </div>
+		<div id="playercontainercontainer"> </div>
+		<div id="text"> </div>
 
 	</body>

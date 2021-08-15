@@ -229,7 +229,8 @@
 							iframe = document.createElement("iframe");
 							iframe.onload = () => {
 								iframe.contentWindow.console.log = console.log;
-								iframe.contentWindow._init(ws, room);
+								console.log(self);
+								iframe.contentWindow._init(ws, room, self);
 								iframequeue.forEach((i) => {
 									iframe.contentWindow.msgevent(i);	
 								});

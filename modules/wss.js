@@ -120,6 +120,9 @@ module.exports.server = (s) => {
 				}
 			*/
 			// these are now being handeled in https.js so that no wss connection has to be made to redirect back. This means less redirects
+			if (!ws.room) { // incase corrupted room
+				wserror(ws, "Invalid room");
+			}
 			ws.room.players.push(ws.id);
 			// if the game hasnt started and theres no owner assume this player (the first player to join) is the owenr
 			if (ws.room.owner === undefined) {

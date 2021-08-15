@@ -39,7 +39,7 @@
 
 			
 			// init //
-			let ws, room; window._init = (a, b) => { ws = a; room = b; console.log("Game initialized"); _start(); };
+			let ws, room, self; window._init = (a, b, c) => { ws = a; room = b; self = c; console.log("Game initialized"); _start(); };
 			function _start() {
 
 				myturn = false;
