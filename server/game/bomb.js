@@ -1,5 +1,9 @@
+"use strict";
+
 let clients, rooms;
 module.exports.init = (a, b) => { clients = a; rooms = b };
+
+let oldturn;
 
 const check = (/[a-zA-Z]/);
 const words = require("../../modules/words.js");
@@ -67,7 +71,51 @@ function sendallexcept(ws, msg) {
 	});
 }
 
-function timeout(id) {
+function turn(ws, aturn, adead) {
+
+	clients[ws.room.players[ws.room.data.turn]].data.type = "";
+
+	if (aturn) {
+		oldturn = ws.room.data.turn;
+		do {
+			ws.room.data.turn++;
+			if (ws.room.data.turn === ws.room.players.length) { ws.room.data.turn = 0; }
+		} while (ws.room.players[ws.room.data.turn].lives === 0);
+		if (ws.room.data.turn === oldturn) { // all but 1 is ded
+			ws.room._win(clients[ws.players[ws.room.data.turn]]);
+			return;
+		}
+		clearTimeout(ws.room.data.timeout);
+		ws.room.data.timeout = setTimeout(timeout, 10000, clients[ws.room.players[ws.room.data.turn]]);
+		if (!adead) {
+			ws.room.data.str = randsub();
+		}
+	}
+	ws.room.players.forEach((m) => {
+		clients[m].send(JSON.stringify({
+			type: "gameattempt",
+			id  : ws.id,
+			turn: (aturn ? ws.room.players[ws.room.data.turn] : undefined), // leave undefined too not change turn
+			str : (((aturn) && (!adead)) ? ws.room.data.str : undefined),
+			dead: adead
+		}));
+	});
+	/*ws.send(JSON.stringify({
+					type: "gameattemptresponce",
+					turn: (succsess ? ws.room.players[ws.room.data.turn] : undefined), // leave undefined too not change turn
+					str : ws.room.data.str
+				}));*/
+}
+
+function timeout(ws) {
+	ws.data.lives--;
+	console.log(ws.data.lives);
+	/*if (ws.data.lives === 0) {
+		
+	} else {
+		
+	}*/
+	turn(ws, true, true);
 	
 }
 
@@ -80,8 +128,10 @@ module.exports.onconnect = (ws) => {
 module.exports.start = (ws) => {
 	ws.room.data = {
 		turn: 0,
-		str : randsub()
+		str : randsub(),
+		timeout: null
 	};
+	ws.room.data.timeout = setTimeout(timeout, 10000, clients[ws.room.players[ws.room.data.turn]]);
 	ws.room.players.forEach((i, m) => {
 		clients[i].data = {
 			id   : m,
@@ -148,47 +198,15 @@ module.exports.onmessage = (ws, data) => {
 			if (ws.data.id !== ws.room.data.turn) {
 				return;
 			}
-			/*
-			;
-		;
-			ws.room.players.forEach((m) => {
-				console.log(m)
-				if (m !== ws.id) {
-					clients[m].send(JSON.stringify({
-						type: "gamepress",
-						data: data.msg,
-						turn: ws.room.data.turn === clients[i].dataid
-					}));
-				}
-			});*/
-			
-			let succsess = (ws.data.type.includes(ws.room.data.str) && words.includes(ws.data.type));
-			if (succsess) {
-			
-				ws.room.data.turn++;
-				ws.room.data.turn %= ws.room.players.length;
 
-				ws.room.data.str = randsub();
+			
 
+			if (ws.data.type.includes(ws.room.data.str) && words.includes(ws.data.type)) {
+				turn(ws, true, false);
+			} else {
+				turn(ws, false, false);
 			}
 			
-			
-			ws.data.type = "";
-			ws.room.players.forEach((m) => {
-				if (m !== ws.id) {
-					clients[m].send(JSON.stringify({
-						type: "gameattempt",
-						id  : ws.id,
-						turn: (succsess ? ws.room.players[ws.room.data.turn] : undefined), // leave undefined too not change turn
-						str : ws.room.data.str
-					}));
-				}
-			});
-			ws.send(JSON.stringify({
-				type: "gameattemptresponce",
-				turn: (succsess ? ws.room.players[ws.room.data.turn] : undefined), // leave undefined too not change turn
-				str : ws.room.data.str
-			}));
 			break;
 			
 		default:
