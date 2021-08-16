@@ -1,4 +1,3 @@
-<DOCTYPE html>
 
 <html>
 
@@ -21,7 +20,9 @@
 				top: 50%;
 				margin-left: -5vh;
 				margin-top: -5vh;
-				animation: pulse 1s infinite;
+				text-align: center;
+				vertical-align: middle;
+				padding: 0.5vh;
 			}
 			.playercontainer {
 				position: absolute;
@@ -77,6 +78,15 @@
 					transform: scale(0.8);
 				}
 			}
+			#timer {
+				font-size: 4vh;
+				color: white;
+				/*padding-top: calc(50% - 0.5em);*/
+			}
+			#str {
+				font-size: 4vh;
+				color: white;
+			}
 		</style>
 	</head>
 
@@ -88,16 +98,19 @@
 
 			const check = (/[a-zA-Z]/);
 
-			let bomb, playercontainercontainer, playercontainer, playerbox, playername, playertext, turn, text; // vars
+			let str, strvalue, timer, timervalue, timerid, bomb, playercontainercontainer, playercontainer, playerbox, playername, playertext, turn, text; // vars
 			
 						
 			// init //
 			let ws, room, self; window._init = (a, b, c) => { ws = a; room = b; self = c; console.log("Game initialized"); _start(); };
 			function _start() {
 
-				bomb = document.getElementById("bomb"); 
+				timer = document.getElementById("timer");
+				str   = document.getElementById("str");
+				console.log(str);
+				bomb  = document.getElementById("bomb"); 
 				playercontainercontainer = document.getElementById("playercontainercontainer"); 
-				text = document.getElementById("text"); 
+				text  = document.getElementById("text"); 
 
 				playercontainer = document.createElement("div");
 				playercontainer.className = "playercontainer";
@@ -150,16 +163,53 @@
 			}  
 			// init //
 
-			function colorplayer(a, b) {
-				if (a) {
-					room.players[a].data.ebox.className = "playerbox";
-				}
-				room.players[b].data.ebox.className = "playerbox playerboxsel";
-			}
-
 			function textplayerupdate(id) {
 				console.log(room.players[id].data.etext.scrollWidth);
 				room.players[id].data.etext.style = `right:${(room.players[id].data.etext.scrollWidth / 2) - (room.players[id].data.etext.clientWidth / 2)}px`;
+			}
+
+			function turnset(old, id, s) {
+
+				str.innerHTML = s;
+				strvalue = s;
+
+				if (old) {
+					room.players[old].data.ebox.className = "playerbox";
+				}
+				room.players[id].data.ebox.className = "playerbox playerboxsel";
+
+				if (timerid) {
+					clearTimeout(timerid);
+				}
+
+				bomb.style = null;
+				bomb.offsetHeight; /* trigger reflow */
+				timervalue = 10;
+				bomb.style = "animation: pulse 1s infinite;";
+				timerid = setTimeout(timertick, 1000);
+				timer.innerHTML = timervalue;
+
+				turn = id;
+		
+			}
+
+			function strset(e) {
+
+				
+				
+			}
+
+			function timertick() {
+
+
+				if (timervalue === 0) {
+					//TODO
+				} else {
+					timervalue--;
+					timer.innerHTML = timervalue;
+				}
+				timerid = setTimeout(timertick, 1000);
+				
 			}
 
 			function msgevent(msg) { // already decoded json btw
@@ -167,8 +217,7 @@
 				switch (msg.type) {
 
 					case "gameinit":
-						turn = msg.start;
-						colorplayer(undefined, turn);
+						turnset(undefined, msg.turn, msg.str);
 						break;
 
 					case "gametype":
@@ -176,12 +225,16 @@
 						textplayerupdate(msg.id);
 						break;
 
+					case "gametypedel":
+						room.players[msg.id].data.etext.innerHTML = room.players[msg.id].data.etext.innerHTML.slice(0, -1);
+						textplayerupdate(msg.id);
+						break;
+
 					case "gameattempt":
 						room.players[msg.id].data.etext.innerHTML = "";
 						textplayerupdate(msg.id);
 						if (msg.turn) {
-							colorplayer(turn, msg.turn);
-							turn = msg.turn;
+							turnset(turn, msg.turn, msg.str);
 						}
 						break;		
 
@@ -189,11 +242,10 @@
 						text.innerHTML = "";
 						room.players[self].data.etext.innerHTML = "";
 						textplayerupdate(self);
-						if (msg.id) {// if was succsessfull
-							colorplayer(turn, msg.id);
-							turn = msg.id;
+						if (msg.turn) {// if was succsessfull
+							turnset(turn, msg.turn, msg.str);
 						} else {
-							//TODO
+							//TODO bomb explosion
 						}
 						break;
 				
@@ -203,23 +255,31 @@
 
 			}
 
-			function attempt(id, str) {
-				console.log("attempt", id, str)
-			}
-
 			document.onkeydown = (e) => {
 				if (self !== turn) { return; }
+				if (e.key === "Backspace") { e.preventDefault(); }
 				e = e.key;
 				if (e.length > 1) {
 					if (e === "Enter") {
 						ws.send(JSON.stringify({
 							type: "gameattempt"
 						}))
+					} else if (
+						(e === "Backspace") ||
+						(e === "Delete")
+					) {
+						text.innerHTML = text.innerHTML.slice(0, -1);
+						room.players[self].data.etext.innerHTML = text.innerHTML;
+						textplayerupdate(self);
+						ws.send(JSON.stringify({
+							type: "gametypedel",
+						}))
 					}
+					console.log(e)
 					return;
 				}
 				if (check.test(e)) {
-					console.log(e);
+					e = e.toUpperCase();
 					text.innerHTML += e;
 					room.players[self].data.etext.innerHTML += e;
 					textplayerupdate(self);
@@ -232,7 +292,7 @@
 
 		</script>
 
-		<div id="bomb"> </div>
+		<div id="bomb"> <div id="timer"> </div> <div id="str"> </div> </div>
 		<div id="playercontainercontainer"> </div>
 		<div id="text"> </div>
 
