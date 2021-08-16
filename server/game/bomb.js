@@ -3,8 +3,6 @@
 let clients, rooms;
 module.exports.init = (a, b) => { clients = a; rooms = b };
 
-let oldturn;
-
 const check = (/[a-zA-Z]/);
 const words = require("../../modules/words.js");
 const subs  = [
@@ -76,16 +74,11 @@ function turn(ws, aturn, adead) {
 	clients[ws.room.players[ws.room.data.turn]].data.type = "";
 
 	if (aturn) {
-		oldturn = ws.room.data.turn;
+		clearTimeout(ws.room.data.timeout);
 		do {
 			ws.room.data.turn++;
 			if (ws.room.data.turn === ws.room.players.length) { ws.room.data.turn = 0; }
-		} while (ws.room.players[ws.room.data.turn].lives === 0);
-		if (ws.room.data.turn === oldturn) { // all but 1 is ded
-			ws.room._win(clients[ws.players[ws.room.data.turn]]);
-			return;
-		}
-		clearTimeout(ws.room.data.timeout);
+		} while (clients[ws.room.players[ws.room.data.turn]].data.lives === 0);
 		ws.room.data.timeout = setTimeout(timeout, 10000, clients[ws.room.players[ws.room.data.turn]]);
 		if (!adead) {
 			ws.room.data.str = randsub();
@@ -100,21 +93,39 @@ function turn(ws, aturn, adead) {
 			dead: adead
 		}));
 	});
-	/*ws.send(JSON.stringify({
-					type: "gameattemptresponce",
-					turn: (succsess ? ws.room.players[ws.room.data.turn] : undefined), // leave undefined too not change turn
-					str : ws.room.data.str
-				}));*/
 }
 
 function timeout(ws) {
+
 	ws.data.lives--;
 	console.log(ws.data.lives);
-	/*if (ws.data.lives === 0) {
+	if (ws.data.lives === 0) {
+		console.log("OH NO HE DEAD");
+		let alive = false;
+		let m;
+		for (let i = 0; i < ws.room.players.length; ++i) {
+			m = clients[ws.room.players[i]];
+			if (m.data.lives !== 0) {
+				if (alive === false) {
+					alive = m;
+				} else {
+					alive = true;
+					break;
+				}
+			}
+			
+		}
+		if (alive === false) { // 0 players left (somehow)
+			clearTimeout(ws.room.data.timeout);
+			ws.room._win(ws, true);
+			return;
+		} else if (alive !== true) { // 1 player left
+			clearTimeout(ws.room.data.timeout);
+			ws.room._win(m, false);
+			return;
+		}
 		
-	} else {
-		
-	}*/
+	}
 	turn(ws, true, true);
 	
 }
@@ -135,7 +146,7 @@ module.exports.start = (ws) => {
 	ws.room.players.forEach((i, m) => {
 		clients[i].data = {
 			id   : m,
-			lives: 1, //TODO
+			lives: 3,
 			type : ""
 		}	
 	});

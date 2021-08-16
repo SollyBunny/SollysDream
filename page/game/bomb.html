@@ -32,7 +32,10 @@
 				/*background-color: green;*/
 			}
 			.playername {
-				transform: translate(0, -1em);
+				/*transform: translate(0, -1em);*/
+				overflow: visible;
+				max-width: 5vh;
+				position: relative;
 			}
 			.playerbox {
 				width: 5vh;
@@ -42,7 +45,14 @@
 			.playerboxsel {
 				background-color: red !important;
 			}
-			.playertext{
+			.playerboxded {
+				background-color: grey !important;
+			}
+			.playerlife {
+				color: red;
+				font-size: 2vh;
+			}
+			.playertext {
 				/*transform: translate(0, 5vh);*/
 				overflow: visible;
 				max-width: 5vh;
@@ -100,7 +110,7 @@
 
 			const check = (/[a-zA-Z]/);
 
-			let str, strvalue, timer, timervalue, timerid, bomb, playercontainercontainer, playercontainer, playerbox, playername, playertext, turn, text; // vars
+			let str, strvalue, timer, timervalue, timerid, bomb, playercontainercontainer, playercontainer, playerbox, playername, playerlife, playertext, turn, text; // vars
 			
 						
 			// init //
@@ -120,6 +130,9 @@
 				playername = document.createElement("div");
 				playername.className = "playername";
 
+				playerlife = document.createElement("div");
+				playerlife.className = "playerlife";
+
 				playerbox = document.createElement("div");
 				playerbox.className = "playerbox";
 
@@ -137,19 +150,22 @@
 
 						room.players[i].data.econtainer = playercontainer.cloneNode();
 						room.players[i].data.ename      = playername.cloneNode();
+						room.players[i].data.elife      = playerlife.cloneNode();
 						room.players[i].data.ebox       = playerbox.cloneNode();
 						room.players[i].data.etext      = playertext.cloneNode();
 
 						room.players[i].data.econtainer.appendChild(room.players[i].data.ename);
+						room.players[i].data.econtainer.appendChild(room.players[i].data.elife);
 						room.players[i].data.econtainer.appendChild(room.players[i].data.ebox);
 						room.players[i].data.econtainer.appendChild(room.players[i].data.etext);
 						
 					}
 
-					room.players[i].data.econtainer.id = i;
+					room.players[i].data.econtainer.id    = i;
 					room.players[i].data.econtainer.style = `margin-left:${Math.sin(dir)*20-2.5}vh;margin-top:${Math.cos(dir)*20-2.5}vh;`;
 
-					room.players[i].data.ename.innerHTML = room.players[i].name;
+					room.players[i].data.ename.innerHTML  = room.players[i].name;
+					room.players[i].data.elife.innerHTML  = "❤❤❤";
 
 					playercontainercontainer.appendChild(room.players[i].data.econtainer);
 					
@@ -200,8 +216,11 @@
 					case "gameinit":
 						//turnset(undefined, msg.turn, msg.str);
 						//break;
-				
-
+						Object.keys(room.players).forEach((i) => {
+							console.log(room.players[i].data.ename.scrollWidth)
+							console.log(room.players[i].data.ename.clientWidth)
+							room.players[i].data.ename.style = `right:${(room.players[i].data.ename.scrollWidth / 2) - (room.players[i].data.ename.clientWidth / 2)}px`;
+						});
 					case "gameattempt":
 
 						//turnset(turn, msg.turn, msg.str);
@@ -211,6 +230,22 @@
 							textplayerupdate(msg.id);
 							if (msg.id === self) {
 								text.innerHTML = "";
+							}
+							if (msg.dead) {
+								room.players[msg.id].data.lives--;
+								switch (room.players[msg.id].data.lives) {
+									case 2:
+										room.players[msg.id].data.elife.innerHTML  = "❤❤";
+										break;
+									case 1:
+										room.players[msg.id].data.elife.innerHTML  = "❤";
+										break;
+									case 0:
+										room.players[msg.id].data.elife.innerHTML  = "";
+										room.players[msg.id].data.ebox.className = "playerbox playerboxded";
+										break;
+																																											
+								}
 							}
 						}
 						

@@ -20,13 +20,26 @@
 			.box div {
 				font-weight: bold;
 			}
+			#makecontainer {
+				display: inline-block;
+			}
+			#roomname, #gamemode {
+				min-width: 10vw;
+				max-width: 30vw;
+			}
 		</style>
 	</head>
 
 	<body>
 
-		<button id="make"> Make a room! </button>
+		<div id="makecontainer">
+			<button id="make"> Make a room! </button>
+			<input id="roomname" type=text required> </input>
+			<select id="gamemode">
 
+			</select>
+		</div>
+		
 		<hr>
 
 		<div id="boxes">
@@ -47,6 +60,12 @@
 					gamemode = data;
 					ws = new WebSocket('wss://sollysdream.ddns.net/rooms');
 					ws.onmessage = msgevent;
+					let selectinnerhtml = "";
+					Object.keys(gamemode).forEach((i) => {
+						selectinnerhtml += `<option value="${i}">${gamemode[i].name}</option>`
+					});
+					console.log(selectinnerhtml);
+					document.getElementById("gamemode").innerHTML = selectinnerhtml;
 				});
 			}
 			fetchgamemode();
@@ -144,8 +163,8 @@
 				ws.send(JSON.stringify({
 					type    : "make",
 					//gamemode: 0, // tic tac toe
-					gamemode: 1, // bomb
-					roomname: "bombgametest"
+					gamemode: Number(document.getElementById("gamemode").value), // bomb
+					roomname: document.getElementById("roomname").value
 				}));
 			};
 
