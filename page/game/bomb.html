@@ -23,6 +23,7 @@
 				text-align: center;
 				vertical-align: middle;
 				padding: 0.5vh;
+				border-radius: 50%;
 			}
 			.playercontainer {
 				position: absolute;
@@ -53,7 +54,9 @@
 			}
 			.playerlife {
 				color: red;
-				font-size: 2vh;
+				font-size: 1.8vh;
+				overflow: visible;
+				max-width: 5vh;
 			}
 			.playertext {
 				/*transform: translate(0, 5vh);*/
@@ -70,6 +73,30 @@
 				border-top: 1px solid black;
 				height: 2em;
 				text-align: center;
+			}
+			#letters {
+				position: absolute;
+				top: 0;
+				width: 100%;
+				left: 0;
+				right: 0;
+				border-bottom: 1px solid black;
+				height: fit-content;
+				padding: 0.1vh;
+				text-align: center;
+				display: flex;
+				flex-direction: row;
+			}
+			#letters > div {
+				font-size: 4vh;
+				text-align: center;
+				width: 4vh;
+				height: 4vh;
+				border: 1px solid black;
+				margin: 0.1vh;
+			}
+			.lettersel {
+				background-color: green !important;
 			}
 			@keyframes pulse {
 				0% {
@@ -113,7 +140,7 @@
 
 			const check = (/[a-zA-Z]/);
 
-			let str, strvalue, timer, timervalue, timerid, lock, bomb, playercontainercontainer, playercontainer, playerbox, playername, playerlife, playertext, playerlock, turn, text; // vars
+			let letters, str, strvalue, timer, timervalue, timerid, lock, bomb, playercontainercontainer, playercontainer, playerbox, playername, playerlife, playertext, playerlock, turn, text; // vars
 						
 			// init //
 			let ws, room, self; window._init = (a, b, c) => { ws = a; room = b; self = c; console.log("Game initialized"); _start(); };
@@ -121,12 +148,12 @@
 
 				if (!timer) {
 
-					
-					timer = document.getElementById("timer");
-					str   = document.getElementById("str");
-					bomb  = document.getElementById("bomb"); 
+					letters = document.getElementById("letters");
+					timer   = document.getElementById("timer");
+					str     = document.getElementById("str");
+					bomb    = document.getElementById("bomb"); 
 					playercontainercontainer = document.getElementById("playercontainercontainer"); 
-					text  = document.getElementById("text"); 
+					text    = document.getElementById("text"); 
 
 					playerlock = document.createElement("div");
 					playerlock.className = "playerlock";
@@ -148,10 +175,8 @@
 					playertext.className = "playertext";
 				}
 
-				let it = (Math.PI * 2) / Object.keys(room.players).length;
-				let dir = 0;
+				
 				Object.keys(room.players).forEach((i) => {
-					console.log(dir, i);
 
 					room.players[i].data.lives = 3;
 
@@ -173,17 +198,21 @@
 					//}
 
 					room.players[i].data.econtainer.id    = i;
-					room.players[i].data.econtainer.style = `margin-left:${Math.sin(dir)*20-2.5}vh;margin-top:${Math.cos(dir)*20-2.5}vh;`;
-					room.players[i].data.ename.style      = `right:${(room.players[i].data.ename.scrollWidth / 2) - (room.players[i].data.ename.clientWidth / 2)}px`;
-					room.players[i].data.elock.innerHTML  = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-5 7.723v2.277h-2v-2.277c-.595-.347-1-.984-1-1.723 0-1.104.896-2 2-2s2 .896 2 2c0 .738-.404 1.376-1 1.723zm-5-7.723v-4c0-2.206 1.794-4 4-4 2.205 0 4 1.794 4 4v4h-8z"></svg>'
+					room.players[i].data.elock.innerHTML  = '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-5 7.723v2.277h-2v-2.277c-.595-.347-1-.984-1-1.723 0-1.104.896-2 2-2s2 .896 2 2c0 .738-.404 1.376-1 1.723zm-5-7.723v-4c0-2.206 1.794-4 4-4 2.205 0 4 1.794 4 4v4h-8z"></svg>'
 
 					room.players[i].data.ename.innerHTML  = room.players[i].name;
 					room.players[i].data.elife.innerHTML  = "❤❤❤";
 
 					playercontainercontainer.appendChild(room.players[i].data.econtainer);
 					
-					dir += it;
+					
 				});
+
+				let t = "";
+				for (let i = 65; i < 87; ++i) {
+					t = String.fromCharCode(i);
+					letters.innerHTML += `<div id='${t}'>${t}</div>`;
+				}
 
 			}
 			function _restart() {
@@ -196,8 +225,31 @@
 			// init //
 
 			function textplayerupdate(id) {
-				console.log(room.players[id].data.etext.scrollWidth);
 				room.players[id].data.etext.style = `right:${(room.players[id].data.etext.scrollWidth / 2) - (room.players[id].data.etext.clientWidth / 2)}px`;
+			}
+
+			function livesplayerupdate(id) {
+				switch (room.players[id].data.lives) {
+					case 5:
+						room.players[id].data.elife.innerHTML  = "❤❤❤❤❤";
+						break;
+					case 4:
+						room.players[id].data.elife.innerHTML  = "❤❤❤❤";
+						break;
+					case 3:
+						room.players[id].data.elife.innerHTML  = "❤❤❤";
+						break;
+					case 2:
+						room.players[id].data.elife.innerHTML  = "❤❤";
+						break;
+					case 1:
+						room.players[id].data.elife.innerHTML  = "❤";
+						break;
+					case 0:
+						room.players[id].data.elife.innerHTML  = "";
+						room.players[id].data.ebox.className = "playerbox playerboxded";
+						break;																																
+				}
 			}
 
 			function timertick() {
@@ -228,41 +280,71 @@
 						break;
 
 					case "gameinit":
-						/*Object.keys(room.players).forEach((i) => {
-							console.log(room.players[i].data.ename.scrollWidth)
-							console.log(room.players[i].data.ename.clientWidth)
-							
-						});*/
+						let it = (Math.PI * 2) / Object.keys(room.players).length;
+						let dir = 0;
+						Object.keys(room.players).forEach((i) => {
+							room.players[i].data.econtainer.style = `margin-left:${Math.sin(dir)*25-2.5}vh;margin-top: calc(${Math.cos(dir)*25}vh - ${room.players[i].data.econtainer.clientHeight / 2}px);`;
+							room.players[i].data.ename.style      = `right:${(room.players[i].data.ename.scrollWidth / 2) - (room.players[i].data.ename.clientWidth / 2)}px`;
+							dir += it;
+						});
 					case "gameattempt":
 
 						if (msg.id) {
+							
+							if (msg.spec === 0) {
+							
+								room.players[msg.id].data.lives--;
+								livesplayerupdate(msg.id);
+								
+							} else if (msg.spec === 1) {
+							
+								//lock.style = `display: block; left: ${room.players[msg.id].ebox.clientX}; top: calc(${room.players[msg.1id].ename.clientX} - 2em);`;
+								room.players[msg.id].data.elock.style.transitionDuration = "0s";
+								room.players[msg.id].data.elock.style.opacity = "1";
+								window.setTimeout((id) => {
+									room.players[msg.id].data.elock.style.transitionDuration = "2s";
+									room.players[msg.id].data.elock.style.opacity = "0";
+								}, 1000, msg.id);
+								
+							} else if (msg.spec === 2) {
+							
+								if (msg.id === self) {
+									let t = "";
+									for (let i = 65; i < 87; ++i) {
+										t = String.fromCharCode(i);
+										document.getElementById(t).className = "";
+									}
+								}
+
+								room.players[msg.id].data.lives++;
+								livesplayerupdate(msg.id)
+								
+							} else {
+
+								// TODO MERGE with below
+								if ((msg.id === self) && (msg.turn)) {
+									console.log("WE WIN THESE")
+									//console.log(text.innerHTML.split(''))
+									for (let i = 1; i < text.innerHTML.length; ++i) {
+										if (text.innerHTML.charCodeAt(i) < 87) {
+											console.log(text.innerHTML[i]);
+											document.getElementById(text.innerHTML[i]).className = "lettersel";
+										}
+									}
+									/*([...(text.innerHTML)]).forEach((i) => {
+										//console.log(i);
+										
+									});*/
+								}
+								
+							}
+
 							room.players[msg.id].data.etext.innerHTML = "";
 							textplayerupdate(msg.id);
 							if (msg.id === self) {
 								text.innerHTML = "";
 							}
-							if (msg.spec === 0) {
-								room.players[msg.id].data.lives--;
-								switch (room.players[msg.id].data.lives) {
-									case 2:
-										room.players[msg.id].data.elife.innerHTML  = "❤❤";
-										break;
-									case 1:
-										room.players[msg.id].data.elife.innerHTML  = "❤";
-										break;
-									case 0:
-										room.players[msg.id].data.elife.innerHTML  = "";
-										room.players[msg.id].data.ebox.className = "playerbox playerboxded";
-										break;
-																																											
-								}
-							} else if (msg.spec === 1) {
-								//lock.style = `display: block; left: ${room.players[msg.id].ebox.clientX}; top: calc(${room.players[msg.1id].ename.clientX} - 2em);`;
-								room.players[msg.id].data.elock.style.transitionDuration = "0s";
-								room.players[msg.id].data.elock.style.opacity = "1";
-								room.players[msg.id].data.elock.style.transitionDuration = "2s";
-								room.players[msg.id].data.elock.style.opacity = "0";
-							}
+
 						}
 						
 						if (msg.str) {
@@ -271,12 +353,14 @@
 						}
 						
 						if (msg.turn) {
-						
+
 							if (turn) {
 								room.players[turn].data.ebox.className = "playerbox";
 							}
 							room.players[msg.turn].data.ebox.className = "playerbox playerboxsel";
 							turn = msg.turn;
+
+
 							
 							if (timerid) {
 								clearInterval(timerid);
@@ -301,8 +385,8 @@
 
 			function leaveevent(id) {
 
-				room.players[msg.id].data.elife.innerHTML = "";
-				room.players[msg.id].data.ebox.className  = "playerbox playerboxded";
+				room.players[id].data.elife.innerHTML = "";
+				room.players[id].data.ebox.className  = "playerbox playerboxded";
 				
 			}
 
@@ -343,7 +427,8 @@
 
 		</script>
 
-		<div id="bomb"> <div id="timer"> </div> <div id="str"> </div> </div>
+		<div id="letters"> </div>
+		<div id="bomb"> <div id="timer"> 10 </div> <div id="str"> ___ </div> </div>
 		<div id="playercontainercontainer"> </div>
 		<div id="text"> </div>
 

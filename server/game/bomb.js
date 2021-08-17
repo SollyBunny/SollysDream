@@ -3,7 +3,6 @@ module.exports.init = (a, b) => { clients = a; rooms = b };
 
 const check = (/[a-zA-Z]/);
 const words = require("../../modules/words.js");
-const subs = [ "A" ];
 /*const subs  = [
 	"XY",
 	"ELL",
@@ -55,9 +54,9 @@ const subs = [ "A" ];
 	"RAT",
 	"IF",
 ];*/
-function randsub() {
-	return subs[Math.floor(Math.random() * subs.length)]
-}
+/*function randsub() {
+	return subs[Math.floor(Math.random()  subs.length)]
+}*/
 
 function sendallexcept(ws, msg) {
 	ws.room.players.forEach((m) => {
@@ -81,8 +80,11 @@ function turn(ws, aturn, aspec) {
 			if (ws.room.data.turn === ws.room.players.length) { ws.room.data.turn = 0; }
 		} while (clients[ws.room.players[ws.room.data.turn]].data.lives === 0);
 		ws.room.data.timeout = setTimeout(timeout, 10000, clients[ws.room.players[ws.room.data.turn]]);
-		if ((aturn) && (aspec === undefined)) {
-			ws.room.data.str = randsub();
+		if (
+			(aturn) && 
+			((aspec === undefined) || (aspec === 2))
+		) {
+			ws.room.data.str = words.subs[Math.floor(Math.random() * words.subs.length)];
 		}
 	}
 	ws.room.players.forEach((m) => {
@@ -144,16 +146,17 @@ function timeout(ws) {
 module.exports.start = (ws) => {
 	ws.room.data = {
 		turn: 0,
-		str : randsub(),
+		str : words.subs[Math.floor(Math.random() * words.subs.length)],
 		timeout: null,
 		words: []
 	};
 	ws.room.data.timeout = setTimeout(timeout, 10000, clients[ws.room.players[ws.room.data.turn]]);
 	ws.room.players.forEach((i, m) => {
 		clients[i].data = {
-			id   : m,
-			lives: 3,
-			type : ""
+			id      : m,
+			lives   : 3,
+			type    : "",
+			letters : new Set()
 		}	
 	});
 	ws.room.players.forEach((m, i) => {
@@ -226,13 +229,33 @@ module.exports.onmessage = (ws, data) => {
 			if (ws.data.id !== ws.room.data.turn) {
 				return;
 			}
-
-			if (ws.data.type.includes(ws.room.data.str) && words.includes(ws.data.type)) {
-				if (ws.room.data.words.includes(ws.room.data.str)) {
+			console.log(ws.room.data.words);
+			if (ws.data.type.includes(ws.room.data.str) && words.words.includes(ws.data.type)) {
+				if (ws.room.data.words.includes(ws.data.type)) {
 					turn(ws, false, 1);
 				} else {
-					ws.room.data.words.push(ws.room.data.str);
-					turn(ws, true, undefined);
+					let m;
+					for (let i = 0; i < ws.data.type.length; ++i) {
+						m = ws.data.type.charCodeAt(i);
+						if (i < 87) {
+							ws.data.letters.add(i);
+						}
+					}
+					if (ws.data.letters.size === 21) {
+						ws.room.players.forEach((j) => {
+							clients[j].send(JSON.stringify({
+								type: "gamelife",
+								id  : ws.id
+							}));
+						});
+						ws.data.letters = new Set();
+						ws.data.lives++;
+						ws.room.data.words.push(ws.data.type);
+						turn(ws, true, 2);
+					} else {
+						ws.room.data.words.push(ws.data.type);
+						turn(ws, true, undefined);
+					}
 				}
 			} else {
 				turn(ws, false, undefined);
