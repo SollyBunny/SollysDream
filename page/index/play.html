@@ -92,8 +92,6 @@
 
 		<script>
 
-			let ws;
-
 			var gamemode;
 			async function fetchgamemode() {
 				await fetch("/gamemode.json")
@@ -109,6 +107,7 @@
 			fetchgamemode();
 
 			var self = undefined;
+			let ws;
 			let iframe;
 			let iframequeue = [];
 			let iframecontainer = document.getElementById("iframecontainer");
@@ -190,6 +189,10 @@
 					case "leave":
 						delplayer(msg.id);
 						updateplayercounter();
+						if (iframe.contentWindow._init) {
+							iframe.contentWindow.leaveevent(msg.id);
+							return;
+						}
 						break;
 					case "err":
 						/*if (msg.msg === "Username is not valid") {

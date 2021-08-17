@@ -88,6 +88,9 @@ module.exports.ondisconnect = (ws) => {
 			type: "unready"	
 		}));
 	}
+	if (ws.room.playing) {
+		ws.room.owner.gamehandle.ondisconnect(ws);
+	}
 };
 
 module.exports.onmessage = (ws, data) => {

@@ -34,7 +34,7 @@
 
 		<div id="makecontainer">
 			<button id="make"> Make a room! </button>
-			<input id="roomname" type=text required> </input>
+			<input id="roomname" type="text" placeholder="room name" required> </input>
 			<select id="gamemode">
 
 			</select>
@@ -47,6 +47,8 @@
 		</div>
 
 		<script>
+
+			const check = (/[a-zA-Z0-9_!?,. ]/);
 
 			let ws;
 
@@ -78,7 +80,10 @@
 
 			function redoroom(id) {
 				let room = document.getElementById(id);
-				if (rooms[id].players === gamemode[rooms[id].gamemode].maxplayers) {
+				if (
+					(rooms[id].players === gamemode[rooms[id].gamemode].maxplayers) ||
+					(rooms[id].playing)
+				) {
 					room.onclick = undefined;
 					room.disabled = true;
 				} else {
@@ -148,6 +153,14 @@
 						rooms[msg.id].players--;
 						redoroom(msg.id);
 						break;
+					case "start":
+						rooms[msg.id].playing = true;
+						redoroom(msg.id);
+						break;
+					case "win":
+						rooms[msg.id].playing = false;
+						redoroom(msg.id);
+						break;
 					case "err":
 						if (msg.msg === "Username is not valid") {
 							document.cookie = "";
@@ -159,12 +172,27 @@
 				}
 			};
 
+			roomname.onkeypress = (e) => {	
+				if (e.key === "Enter") {
+					make.onclick();
+				} else if (check.test(e.key)) {
+					roomname.value += e.key;
+					e.preventDefault();
+				} else if ((e.key !== 8) && (e.key !== 46)) {
+					e.preventDefault();
+				}
+			};
+
 			make.onclick = () => {
+				let t;
+				if (!(t = document.getElementById("roomname").value)) {
+					return;
+				}
 				ws.send(JSON.stringify({
 					type    : "make",
 					//gamemode: 0, // tic tac toe
-					gamemode: Number(document.getElementById("gamemode").value), // bomb
-					roomname: document.getElementById("roomname").value
+					gamemode: Number(document.getElementById("gamemode").value),
+					roomname: t
 				}));
 			};
 

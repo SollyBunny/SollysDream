@@ -6,26 +6,33 @@
 		<title> Game </title>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8">
 		<style>
-
+			
+			#gridcontainer {
+				width: 100%;
+			}
 			#grid {
+				position: relative;
+				left: 50%;
+				transform: translate(-50%, 0);
 				display: grid;
-				/*grid-template-columns: repeat(3, auto); */
 				text-align: center;
 				grid-template-columns: 1fr 1fr 1fr;
 				grid-template-rows: 1fr 1fr 1fr;
-				gap: 1vw;
-
+				width: -moz-fit-content;
+				width: fit-content;
+				height: -moz-fit-content;
+				height: fit-content;
+				font-size: 25vw;
 			}
 
 			.cell {
 				text-align: center;
-				width: 30vw;
-				height: 30vw;
 				border: 1px solid black;
 				cursor: pointer;
-				font-size: 60px;
 				margin: 0;
 				padding: 0;
+				width: 30vw;
+				height: 30vw;
 			}
 			
 		</style>
@@ -35,8 +42,9 @@
 
 		<script> 
 
-			let myturn, x, y; // vars
+			"use strict"
 
+			let myturn, x, y; // vars
 			
 			// init //
 			let ws, room, self; window._init = (a, b, c) => { ws = a; room = b; self = c; console.log("Game initialized"); _start(); };
@@ -51,7 +59,7 @@
 				
 				for (let id = 0; id < 9; ++id) {
 					let cell = document.getElementById(id);
-					cell.innerHTML = "";
+					cell.innerHTML = "&nbsp";
 					cell.onclick = press;
 				}
 
@@ -92,7 +100,6 @@
 						break;
 
 					case "gamepress":
-						console.log("PRESSED")
 						setcell(msg.id, y);
 						myturn = true;
 						break;
@@ -102,24 +109,25 @@
 
 						
 				}
-
 				
+			}
+
+			function leaveevent(id) {
+
 			}
 
 		</script>
 
-		<p> hi </p>
-
-		<div id="grid">
-            <div id="0" onclick="press(0)" class="cell"></div>
-            <div id="1" onclick="press(1)" class="cell"></div>
-            <div id="2" onclick="press(2)" class="cell"></div>
-            <div id="3" onclick="press(3)" class="cell"></div>
-            <div id="4" onclick="press(4)" class="cell"></div>
-            <div id="5" onclick="press(5)" class="cell"></div>
-            <div id="6" onclick="press(6)" class="cell"></div>
-            <div id="7" onclick="press(7)" class="cell"></div> 
-            <div id="8" onclick="press(8)" class="cell"></div>
-        </div>
+		<div id="gridcontainer"><div id="grid">
+            <div id="0" onclick="press(0)" class="cell">&nbsp</div>
+            <div id="1" onclick="press(1)" class="cell">&nbsp</div>
+            <div id="2" onclick="press(2)" class="cell">&nbsp</div>
+            <div id="3" onclick="press(3)" class="cell">&nbsp</div>
+            <div id="4" onclick="press(4)" class="cell">&nbsp</div>
+            <div id="5" onclick="press(5)" class="cell">&nbsp</div>
+            <div id="6" onclick="press(6)" class="cell">&nbsp</div>
+            <div id="7" onclick="press(7)" class="cell">&nbsp</div> 
+            <div id="8" onclick="press(8)" class="cell">&nbsp</div>
+        </div></div>
 		
 	</body> 

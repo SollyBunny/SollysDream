@@ -1,11 +1,19 @@
 const gamemode = require("../..//modules/gamemode.js");
 
+const check = (/^[a-zA-Z0-9_!?,. ]+$/);
+
 let clients, rooms;
 module.exports.init = (a, b) => { clients = a; rooms = b };
 
 module.exports.players = [];
 
 function _win(ws, draw) {
+	require("../../server/index/rooms.js").players.forEach((m) => {
+		clients[m].send(JSON.stringify({
+			type: "win",
+			id  : ws.room.id
+		}));
+	});	
 	ws.room.players.forEach((i) => {
 		clients[i].send(JSON.stringify({
 			type: "gamewin",
@@ -88,6 +96,9 @@ module.exports.onmessage = (ws, data) => {
 
 		case "make":
 			if (!(gamemode[data.gamemode])) {
+				return;
+			}
+			if (!(check.test(data.roomname))) {
 				return;
 			}
 			let tid = new Date().getTime();

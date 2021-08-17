@@ -34,12 +34,6 @@ function sendallexcept(ws, msg) {
 	});
 }
 
-module.exports.onconnect = (ws) => {
-
-	
-
-};
-
 module.exports.start = (ws) => {
 	ws.room.data = {
 		turn: 0,
@@ -51,17 +45,24 @@ module.exports.start = (ws) => {
 		lastturn: undefined,
 		turncount: 0
 	};
-	console.log(ws.room.players);
 	clients[ws.room.players[ws.room.data.turn]].send(JSON.stringify({
 		type: "gamestart"
 	}));
 }
 
+module.exports.onconnect = (ws) => {
+
+};
+
 module.exports.ondisconnect = (ws) => {
+
+	ws.room._win(clients[ws.room.players[0]], false);
 
 };
 
 module.exports.onmessage = (ws, data) => {
+
+	if (!ws._safe()) { return; };
 
 	switch (data.type) {
 

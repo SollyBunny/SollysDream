@@ -1,11 +1,10 @@
-"use strict";
-
 let clients, rooms;
 module.exports.init = (a, b) => { clients = a; rooms = b };
 
 const check = (/[a-zA-Z]/);
 const words = require("../../modules/words.js");
-const subs  = [
+const subs = [ "A" ];
+/*const subs  = [
 	"XY",
 	"ELL",
 	"MOL",
@@ -55,7 +54,7 @@ const subs  = [
 	"NT",
 	"RAT",
 	"IF",
-];
+];*/
 function randsub() {
 	return subs[Math.floor(Math.random() * subs.length)]
 }
@@ -69,7 +68,9 @@ function sendallexcept(ws, msg) {
 	});
 }
 
-function turn(ws, aturn, adead) {
+function turn(ws, aturn, aspec) {
+
+	if (!ws._safe()) { return; };
 
 	clients[ws.room.players[ws.room.data.turn]].data.type = "";
 
@@ -80,7 +81,7 @@ function turn(ws, aturn, adead) {
 			if (ws.room.data.turn === ws.room.players.length) { ws.room.data.turn = 0; }
 		} while (clients[ws.room.players[ws.room.data.turn]].data.lives === 0);
 		ws.room.data.timeout = setTimeout(timeout, 10000, clients[ws.room.players[ws.room.data.turn]]);
-		if (!adead) {
+		if ((aturn) && (aspec === undefined)) {
 			ws.room.data.str = randsub();
 		}
 	}
@@ -89,58 +90,63 @@ function turn(ws, aturn, adead) {
 			type: "gameattempt",
 			id  : ws.id,
 			turn: (aturn ? ws.room.players[ws.room.data.turn] : undefined), // leave undefined too not change turn
-			str : (((aturn) && (!adead)) ? ws.room.data.str : undefined),
-			dead: adead
+			str : (((aturn) && (aspec === undefined)) ? ws.room.data.str : undefined),
+			spec: aspec
 		}));
 	});
 }
 
+function checkwin(ws) {
+
+	let alive = false;
+	let m;
+	for (let i = 0; i < ws.room.players.length; ++i) {
+		m = clients[ws.room.players[i]];
+		if (m.data.lives !== 0) {
+			if (alive === false) {
+				alive = m;
+			} else {
+				alive = true;
+				break;
+			}
+		}
+		
+	}
+	if (alive === false) { // 0 players left (somehow)
+		clearTimeout(ws.room.data.timeout);
+		ws.room._win(ws, true);
+		return true;
+	} else if (alive !== true) { // 1 player left
+		clearTimeout(ws.room.data.timeout);
+		ws.room._win(alive, false);
+		return true;
+	}
+
+	return false;
+	
+}
+
 function timeout(ws) {
+
+	if (!ws._safe()) { return; };
 
 	ws.data.lives--;
 	console.log(ws.data.lives);
 	if (ws.data.lives === 0) {
-		console.log("OH NO HE DEAD");
-		let alive = false;
-		let m;
-		for (let i = 0; i < ws.room.players.length; ++i) {
-			m = clients[ws.room.players[i]];
-			if (m.data.lives !== 0) {
-				if (alive === false) {
-					alive = m;
-				} else {
-					alive = true;
-					break;
-				}
-			}
-			
-		}
-		if (alive === false) { // 0 players left (somehow)
-			clearTimeout(ws.room.data.timeout);
-			ws.room._win(ws, true);
-			return;
-		} else if (alive !== true) { // 1 player left
-			clearTimeout(ws.room.data.timeout);
-			ws.room._win(m, false);
-			return;
-		}
+	
+		if (checkwin(ws)) { return; }
 		
 	}
-	turn(ws, true, true);
+	turn(ws, true, 0);
 	
 }
-
-module.exports.onconnect = (ws) => {
-
-	
-
-};
 
 module.exports.start = (ws) => {
 	ws.room.data = {
 		turn: 0,
 		str : randsub(),
-		timeout: null
+		timeout: null,
+		words: []
 	};
 	ws.room.data.timeout = setTimeout(timeout, 10000, clients[ws.room.players[ws.room.data.turn]]);
 	ws.room.players.forEach((i, m) => {
@@ -160,11 +166,22 @@ module.exports.start = (ws) => {
 	
 }
 
-module.exports.ondisconnect = (ws) => {
+
+module.exports.onconnect = (ws) => {
 
 };
 
+module.exports.ondisconnect = (ws) => {
+
+	checkwin(ws);
+
+};
+
+
+
 module.exports.onmessage = (ws, data) => {
+
+	if (!ws._safe()) { return; };
 
 	switch (data.type) {
 
@@ -210,12 +227,15 @@ module.exports.onmessage = (ws, data) => {
 				return;
 			}
 
-			
-
 			if (ws.data.type.includes(ws.room.data.str) && words.includes(ws.data.type)) {
-				turn(ws, true, false);
+				if (ws.room.data.words.includes(ws.room.data.str)) {
+					turn(ws, false, 1);
+				} else {
+					ws.room.data.words.push(ws.room.data.str);
+					turn(ws, true, undefined);
+				}
 			} else {
-				turn(ws, false, false);
+				turn(ws, false, undefined);
 			}
 			
 			break;

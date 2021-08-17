@@ -30,17 +30,17 @@
 	
 			if (document.cookie) {document.location = '/rooms';}		
 
+			const check = (/[a-zA-Z0-9_]/);		
+
 			let inp, sub;
 
 			window.onload = () => {
 
-				check = (/[a-zA-Z0-9_]/);
 
 				inp = document.getElementById("inp");
 				sub = document.getElementById("sub");
 
-				inp.onkeypress = (e) => {
-					
+				inp.onkeypress = (e) => {	
 					if (e.key === "Enter") {
 						sub.onclick();
 					} else if (check.test(e.key)) {

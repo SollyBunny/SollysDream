@@ -31,6 +31,9 @@
 				text-align: center;
 				/*background-color: green;*/
 			}
+			.playerlock {
+				
+			}
 			.playername {
 				/*transform: translate(0, -1em);*/
 				overflow: visible;
@@ -110,34 +113,40 @@
 
 			const check = (/[a-zA-Z]/);
 
-			let str, strvalue, timer, timervalue, timerid, bomb, playercontainercontainer, playercontainer, playerbox, playername, playerlife, playertext, turn, text; // vars
-			
+			let str, strvalue, timer, timervalue, timerid, lock, bomb, playercontainercontainer, playercontainer, playerbox, playername, playerlife, playertext, playerlock, turn, text; // vars
 						
 			// init //
 			let ws, room, self; window._init = (a, b, c) => { ws = a; room = b; self = c; console.log("Game initialized"); _start(); };
 			function _start() {
 
-				timer = document.getElementById("timer");
-				str   = document.getElementById("str");
-				console.log(str);
-				bomb  = document.getElementById("bomb"); 
-				playercontainercontainer = document.getElementById("playercontainercontainer"); 
-				text  = document.getElementById("text"); 
+				if (!timer) {
 
-				playercontainer = document.createElement("div");
-				playercontainer.className = "playercontainer";
+					
+					timer = document.getElementById("timer");
+					str   = document.getElementById("str");
+					bomb  = document.getElementById("bomb"); 
+					playercontainercontainer = document.getElementById("playercontainercontainer"); 
+					text  = document.getElementById("text"); 
 
-				playername = document.createElement("div");
-				playername.className = "playername";
+					playerlock = document.createElement("div");
+					playerlock.className = "playerlock";
+					playerlock.style     = "opacity: 0;";
 
-				playerlife = document.createElement("div");
-				playerlife.className = "playerlife";
+					playercontainer = document.createElement("div");
+					playercontainer.className = "playercontainer";
 
-				playerbox = document.createElement("div");
-				playerbox.className = "playerbox";
+					playername = document.createElement("div");
+					playername.className = "playername";
 
-				playertext = document.createElement("div");
-				playertext.className = "playertext";
+					playerlife = document.createElement("div");
+					playerlife.className = "playerlife";
+
+					playerbox = document.createElement("div");
+					playerbox.className = "playerbox";
+
+					playertext = document.createElement("div");
+					playertext.className = "playertext";
+				}
 
 				let it = (Math.PI * 2) / Object.keys(room.players).length;
 				let dir = 0;
@@ -146,23 +155,27 @@
 
 					room.players[i].data.lives = 3;
 
-					if (!room.players[i].data.econtainer) { // init obj structure
+					//if (!room.players[i].data.econtainer) { // init obj structure
 
 						room.players[i].data.econtainer = playercontainer.cloneNode();
+						room.players[i].data.elock      = playerlock.cloneNode();	
 						room.players[i].data.ename      = playername.cloneNode();
 						room.players[i].data.elife      = playerlife.cloneNode();
 						room.players[i].data.ebox       = playerbox.cloneNode();
 						room.players[i].data.etext      = playertext.cloneNode();
 
+						room.players[i].data.econtainer.appendChild(room.players[i].data.elock);
 						room.players[i].data.econtainer.appendChild(room.players[i].data.ename);
 						room.players[i].data.econtainer.appendChild(room.players[i].data.elife);
 						room.players[i].data.econtainer.appendChild(room.players[i].data.ebox);
 						room.players[i].data.econtainer.appendChild(room.players[i].data.etext);
 						
-					}
+					//}
 
 					room.players[i].data.econtainer.id    = i;
 					room.players[i].data.econtainer.style = `margin-left:${Math.sin(dir)*20-2.5}vh;margin-top:${Math.cos(dir)*20-2.5}vh;`;
+					room.players[i].data.ename.style      = `right:${(room.players[i].data.ename.scrollWidth / 2) - (room.players[i].data.ename.clientWidth / 2)}px`;
+					room.players[i].data.elock.innerHTML  = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-5 7.723v2.277h-2v-2.277c-.595-.347-1-.984-1-1.723 0-1.104.896-2 2-2s2 .896 2 2c0 .738-.404 1.376-1 1.723zm-5-7.723v-4c0-2.206 1.794-4 4-4 2.205 0 4 1.794 4 4v4h-8z"></svg>'
 
 					room.players[i].data.ename.innerHTML  = room.players[i].name;
 					room.players[i].data.elife.innerHTML  = "❤❤❤";
@@ -174,7 +187,8 @@
 
 			}
 			function _restart() {
-				
+
+				turn = strvalue = undefined;
 				playercontainercontainer.innerHTML = "";
 
 				_start();
@@ -214,16 +228,12 @@
 						break;
 
 					case "gameinit":
-						//turnset(undefined, msg.turn, msg.str);
-						//break;
-						Object.keys(room.players).forEach((i) => {
+						/*Object.keys(room.players).forEach((i) => {
 							console.log(room.players[i].data.ename.scrollWidth)
 							console.log(room.players[i].data.ename.clientWidth)
-							room.players[i].data.ename.style = `right:${(room.players[i].data.ename.scrollWidth / 2) - (room.players[i].data.ename.clientWidth / 2)}px`;
-						});
+							
+						});*/
 					case "gameattempt":
-
-						//turnset(turn, msg.turn, msg.str);
 
 						if (msg.id) {
 							room.players[msg.id].data.etext.innerHTML = "";
@@ -231,7 +241,7 @@
 							if (msg.id === self) {
 								text.innerHTML = "";
 							}
-							if (msg.dead) {
+							if (msg.spec === 0) {
 								room.players[msg.id].data.lives--;
 								switch (room.players[msg.id].data.lives) {
 									case 2:
@@ -246,6 +256,12 @@
 										break;
 																																											
 								}
+							} else if (msg.spec === 1) {
+								//lock.style = `display: block; left: ${room.players[msg.id].ebox.clientX}; top: calc(${room.players[msg.1id].ename.clientX} - 2em);`;
+								room.players[msg.id].data.elock.style.transitionDuration = "0s";
+								room.players[msg.id].data.elock.style.opacity = "1";
+								room.players[msg.id].data.elock.style.transitionDuration = "2s";
+								room.players[msg.id].data.elock.style.opacity = "0";
 							}
 						}
 						
@@ -281,6 +297,13 @@
 						break;
 				}
 
+			}
+
+			function leaveevent(id) {
+
+				room.players[msg.id].data.elife.innerHTML = "";
+				room.players[msg.id].data.ebox.className  = "playerbox playerboxded";
+				
 			}
 
 			document.onkeydown = (e) => {

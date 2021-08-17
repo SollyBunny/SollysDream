@@ -39,13 +39,18 @@ module.exports.rooms = rooms;
 // The regex check to see if a username is valid (only contains a-zA-Z0-9_) so that they can't include html elements (arbritrary code execution)
 //let check = (/^[a-zA-Z0-9_]+$/);
 
-// Short hand to send an error to client then close it
-function wserror(ws, err) {
-	ws.send(JSON.stringify({
+// Method for game handelers to check if it's safe to run code
+function _safe() {
+	return (this && clients[this.id] && this.room && this.room.playing);
+}
+
+// Method too give error to client and close it
+function _error(err) {
+	this.send(JSON.stringify({
 		type: "err",
 		msg : err
 	}));
-	ws.close();
+	this.close();
 	console.log("WSS error IP:", ws.ip, err);
 }
 
@@ -57,6 +62,16 @@ module.exports.server = (s) => {
 	});
 
 	wss.on("connection", (ws, req) => {
+
+		// Add methods to the ws
+		Object.defineProperty(ws, "_safe", {
+			value   : _safe,
+			writable: false
+		});
+		Object.defineProperty(ws, "_error", {
+		value   : _error,
+		writable: false
+	});
 
 		// Add properties to the ws
 		Object.defineProperty(ws, "ip", {
@@ -121,7 +136,7 @@ module.exports.server = (s) => {
 			*/
 			// these are now being handeled in https.js so that no wss connection has to be made to redirect back. This means less redirects
 			if (!ws.room) { // incase corrupted room
-				wserror(ws, "Invalid room");
+				ws._error("Invalid room");
 			}
 			ws.room.players.push(ws.id);
 			// if the game hasnt started and theres no owner assume this player (the first player to join) is the owenr
@@ -157,7 +172,7 @@ module.exports.server = (s) => {
 
 		// If the handeler is undefined it means that theres.. well no handeler available so just close it.
 		if (ws.handle === undefined) {
-			wserror("Invalid game");
+			ws._error("Invalid game");
 			return;
 		}
 		console.log("WSS IP:", ws.ip, "Url:", ws.url.path, "Cookie:", ws.name);
@@ -171,7 +186,7 @@ module.exports.server = (s) => {
 			try {
 				data = JSON.parse(data); 
 			} catch (e) {
-				wserror(ws, "Invalid JSON in msg");
+				ws._error("Invalid JSON in msg");
 				return;
 			}
 			// Handle the msg
