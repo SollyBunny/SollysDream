@@ -237,8 +237,8 @@ module.exports.onmessage = (ws, data) => {
 					let m;
 					for (let i = 0; i < ws.data.type.length; ++i) {
 						m = ws.data.type.charCodeAt(i);
-						if (i < 87) {
-							ws.data.letters.add(i);
+						if ((64 < m) && (m < 87)) {
+							ws.data.letters.add(m);
 						}
 					}
 					if (ws.data.letters.size === 21) {

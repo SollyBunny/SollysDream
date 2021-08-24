@@ -72,6 +72,14 @@ let file, mime, cookie; module.exports = (page, query) => { switch (page) {
 		cookie = false;
 		break;*/
 
+	case "/rickroll":
+	case "/notarickroll":
+		return ["https://www.youtube.com/watch?v=dQw4w9WgXcQ", 307, true];
+
+	case "/git":
+	case "/github":
+		return ["https://github.com/SollyBunny/SollysDream", 307, true];
+
 	case "/robots.txt":
 		return ["", undefined, false];
 

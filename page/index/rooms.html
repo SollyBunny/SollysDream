@@ -53,8 +53,8 @@
 			let ws;
 
 			var gamemode;
-			async function fetchgamemode() {
-				await fetch("/gamemode.json")
+			function fetchgamemode() {
+				fetch("/gamemode.json")
 				.then(function (response) {
 					return response.json();
 				})
@@ -66,11 +66,13 @@
 					Object.keys(gamemode).forEach((i) => {
 						selectinnerhtml += `<option value="${i}">${gamemode[i].name}</option>`
 					});
-					console.log(selectinnerhtml);
 					document.getElementById("gamemode").innerHTML = selectinnerhtml;
 				});
 			}
 			fetchgamemode();
+
+			let roomname = document.getElementById("roomname")
+			roomname.value = `${document.cookie}s awesome room`;
 
 			let gamecontainer = document.getElementById("boxes");
 			let game = document.createElement("button");
@@ -100,10 +102,10 @@
 				room.innerHTML = `<div>${rooms[id].roomname}\n</div>(${id})<hr> Owner: ${rooms[id].ownername}<br>Playing: ${rooms[id].playing}<br>(${rooms[id].players}/${gamemode[rooms[id].gamemode].maxplayers})`;
 			}
 			
-			function makeroom(id, gamemode, roomname, ownername, players, playing) {
+			function makeroom(id, gamemode, _roomname, ownername, players, playing) {
 				rooms[id] = {
 					gamemode   : gamemode,
-					roomname   : roomname,
+					roomname   : _roomname, // already used name roomname ;-;
 					ownername  : ownername,
 					players    : players,
 					playing    : playing,

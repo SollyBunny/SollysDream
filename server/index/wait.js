@@ -99,6 +99,14 @@ module.exports.onmessage = (ws, data) => {
 
 	switch (data.type) {
 
+		case "chatmsg":
+			sendallexcept(ws, JSON.stringify({
+				type: "chatmsg",
+				msg: data.msg,
+				id: ws.id
+			}));
+			break;
+
 		case "start":
 
 			if (ws.id !== ws.room.owner.id) {
@@ -106,7 +114,7 @@ module.exports.onmessage = (ws, data) => {
 				return;
 			}
 
-			console.log("starting gmae!!!");
+			console.log("starting game!");
 
 			ws.room.playing = true;
 

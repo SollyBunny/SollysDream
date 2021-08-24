@@ -325,8 +325,9 @@
 								if ((msg.id === self) && (msg.turn)) {
 									console.log("WE WIN THESE")
 									//console.log(text.innerHTML.split(''))
-									for (let i = 1; i < text.innerHTML.length; ++i) {
-										if (text.innerHTML.charCodeAt(i) < 87) {
+									for (let i = 0; i < text.innerHTML.length; ++i) {
+										let m = text.innerHTML.charCodeAt(i);
+										if ((64 < m) && (m < 87)) {
 											console.log(text.innerHTML[i]);
 											document.getElementById(text.innerHTML[i]).className = "lettersel";
 										}
