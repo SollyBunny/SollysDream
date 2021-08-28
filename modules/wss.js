@@ -115,26 +115,6 @@ module.exports.server = (s) => {
 				value   : {},
 				writable: true
 			});
-			/*
-				// first check if room exists
-				if ((ws.room in rooms)) {
-					ws.room = rooms[ws.room];
-				} else {
-					wserror(ws, "Invalid room id");
-					return;
-				}
-				// check if room is full
-				if (ws.room.players.length === ws.room.gamemode.maxplayers) {
-					wserror(ws, "Room is full");
-					return;
-				}
-				// check if room is playing
-				if (ws.room.playing) {
-					wserror(ws, "Room is playing");
-					return;
-				}
-			*/
-			// these are now being handeled in https.js so that no wss connection has to be made to redirect back. This means less redirects
 			if (!ws.room) { // incase corrupted room
 				ws._error("Invalid room");
 			}
@@ -148,25 +128,10 @@ module.exports.server = (s) => {
 				writable: true
 			});
 			Object.defineProperty(ws, "gamehandle", {
-				value   : require(server(ws.room.gamemode.id)),
+				value   : gamemode[ws.room.gamemode.id].server,
 				writable: true
 			});
 			ws.gamehandle.init(clients, rooms);
-			/*if (rooms[ws.room].playing) {// if playing use game handeler, otherwise use waiting handeler
-				Object.defineProperty(ws, "handle", {
-					value   : server(rooms[ws.room].gametype),
-					writable: true
-				});
-				// if the gametype isn't valid (unfound) then don't require otherwise server will crash
-				if (ws.handle) {
-					ws.handle = require(ws.handle)
-				} else {
-					//wserror(ws, "Invalid game");
-									
-					return;
-				}
-			// } else {
-			}*/
 			
 		}
 

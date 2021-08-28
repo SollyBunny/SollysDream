@@ -25,6 +25,19 @@
 				padding: 0.5vh;
 				border-radius: 50%;
 			}
+			#arrow {
+				background-color: orange;
+				position: absolute;
+				width: 20vh;
+				height: 5vh;
+				left: 50%;
+				top: 50%;
+				margin-left: -2.5vh;
+				margin-top: -2.5vh;
+				text-align: center;
+				vertical-align: middle;
+				padding: 0.5vh;
+			}
 			.playercontainer {
 				position: absolute;
 				left: 50%;
@@ -151,6 +164,7 @@
 					letters = document.getElementById("letters");
 					timer   = document.getElementById("timer");
 					str     = document.getElementById("str");
+					bomb    = document.getElementById("arrow"); 
 					bomb    = document.getElementById("bomb"); 
 					playercontainercontainer = document.getElementById("playercontainercontainer"); 
 					text    = document.getElementById("text"); 
@@ -283,6 +297,7 @@
 						let it = (Math.PI * 2) / Object.keys(room.players).length;
 						let dir = 0;
 						Object.keys(room.players).forEach((i) => {
+							room.players[i].data.dir              = dir;
 							room.players[i].data.econtainer.style = `margin-left:${Math.sin(dir)*25-2.5}vh;margin-top: calc(${Math.cos(dir)*25}vh - ${room.players[i].data.econtainer.clientHeight / 2}px);`;
 							room.players[i].data.ename.style      = `right:${(room.players[i].data.ename.scrollWidth / 2) - (room.players[i].data.ename.clientWidth / 2)}px`;
 							dir += it;
@@ -323,7 +338,6 @@
 
 								// TODO MERGE with below
 								if ((msg.id === self) && (msg.turn)) {
-									console.log("WE WIN THESE")
 									//console.log(text.innerHTML.split(''))
 									for (let i = 0; i < text.innerHTML.length; ++i) {
 										let m = text.innerHTML.charCodeAt(i);
@@ -361,7 +375,7 @@
 							room.players[msg.turn].data.ebox.className = "playerbox playerboxsel";
 							turn = msg.turn;
 
-
+							arrow.style = `transform: rotate(${room.players[turn].data.dir}rad);`;
 							
 							if (timerid) {
 								clearInterval(timerid);
@@ -429,6 +443,7 @@
 		</script>
 
 		<div id="letters"> </div>
+		<div id="arrow"> </div>
 		<div id="bomb"> <div id="timer"> 10 </div> <div id="str"> ___ </div> </div>
 		<div id="playercontainercontainer"> </div>
 		<div id="text"> </div>

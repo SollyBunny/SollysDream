@@ -57,11 +57,16 @@
 				list-style-type: none;
 				width: 100%;
 			}
-			#iframecontainer, iframe {
+			#iframecontainer {
 				width: 100%;
 				height: 100%;
 				margin: 0;
 				display: none;
+			}
+			iframe {
+				width: 100%;
+				height: 100%;
+				margin: 0;
 			}
 			#chat {
 				padding-top: 8px;
@@ -303,7 +308,7 @@
 								});
 								iframequeue = [];
 							};
-							iframe.src    = `https://sollysdream.ddns.net/game/${room.gamemode}`;
+							iframe.src    = `https://sollysdream.ddns.net/game?${room.gamemode}`;
 							iframe.name   = "game";
 							//iframe.id     = "id";
 							iframe.width  = "100%";

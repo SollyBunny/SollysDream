@@ -1,4 +1,5 @@
-const wss = require("../modules/wss.js");
+const wss      = require("../modules/wss.js");
+const gamemode = require("../modules/gamemode.js");
 
 let file, mime, cookie; module.exports = (page, query) => { switch (page) {
 
@@ -49,12 +50,16 @@ let file, mime, cookie; module.exports = (page, query) => { switch (page) {
 		break;
 
 	case "/gamemode.json":
-		file = "./misc/gamemode.json";
-		mime = "text/json";
-		cookie = false;
+		return [JSON.stringify(gamemode._gamemode), undefined, false];
 		break;
 
-	case "/game/0":
+	case "/game":
+		if (query && gamemode[query]) {
+			return [gamemode[query].client, undefined, false];
+		}
+		return [undefined, 404, false];
+
+	/*case "/game/0":
 		file = "./page/game/tictactoe.html";
 		mime = "text/html";
 		cookie = false;
@@ -64,7 +69,7 @@ let file, mime, cookie; module.exports = (page, query) => { switch (page) {
 		file = "./page/game/bomb.html";
 		mime = "text/html";
 		cookie = false;
-		break;
+		break;*/
 
 	/*case "/furriesonly":
 		file = "./page/reggie.mp4";
@@ -84,6 +89,6 @@ let file, mime, cookie; module.exports = (page, query) => { switch (page) {
 		return ["", undefined, false];
 
 	default:
-		return ["404 Page Not Found", undefined, false];
+		return [undefined, 404, false];
 	
 } return [file, mime, cookie]; }

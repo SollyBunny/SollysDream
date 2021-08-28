@@ -1,0 +1,6 @@
+{ 
+	"id"  : 1,
+	"name": "Bomb",
+	"minplayers": 2,
+	"maxplayers": 15
+}

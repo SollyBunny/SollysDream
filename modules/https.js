@@ -53,10 +53,16 @@ module.exports.server = http.createServer({
 		return;
 	}
 	
-	// if mimetype == undefined, the url wasn't found (ie 404)
-	// (also used to provide plain text responces, like for robots.txt which is empty)
+	// If mime is undefined its text
 	if (mime === undefined) {
 		res.end(filename);
+		console.log("HTTPS IP:", req.connection.remoteAddress, "Url:", req.url, "(text)");
+		return;
+	}
+
+	// 404 ):
+	if (mime === 404) {
+		res.end("404 Page Not Found");
 		console.log("HTTPS IP:", req.connection.remoteAddress, "Url:", req.url, "(404)");
 		return;
 	}
